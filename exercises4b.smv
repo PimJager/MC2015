@@ -1,0 +1,50 @@
+MODULE phil(i, forkL, forkR)
+VAR
+    state: {think, hungry, left, eat};
+INIT
+    state = think;
+ASSIGN
+    next(state) := case
+        state = think                   : {think, hungry};
+        state = hungry & forkL = 0      : left;
+        state = left & forkR = 0        : eat;
+        state = eat                     : {eat, think};
+        TRUE                            : state;
+    esac;
+    next(forkL) := case
+        next(state) = left              : i;
+        next(state) = think             : 0;
+        TRUE                            : forkL;
+    esac;
+    next(forkR) := case
+        next(state) = eat               : i;
+        next(state) = think             : 0;
+        TRUE                            : forkR;
+    esac;
+JUSTICE
+    running & state != eat
+
+MODULE main 
+VAR
+    fork1 : {0,1,2,3,4,5};
+    fork2 : {0,1,2,3,4,5};
+    fork3 : {0,1,2,3,4,5};
+    fork4 : {0,1,2,3,4,5};
+    fork5 : {0,1,2,3,4,5};
+    phil1 : process phil(1, fork1, fork2);
+    phil2 : process phil(2, fork2, fork3);
+    phil3 : process phil(3, fork3, fork4);
+    phil4 : process phil(4, fork4, fork5);
+    phil5 : process phil(5, fork5, fork1);
+ASSIGN
+    init(fork1) := 0;
+    init(fork2) := 0;
+    init(fork3) := 0;
+    init(fork4) := 0;
+    init(fork5) := 0;
+
+CTLSPEC AG (phil1.state = hungry -> AF phil1.state = eat)
+CTLSPEC AG (phil2.state = hungry -> AF phil2.state = eat)
+CTLSPEC AG (phil3.state = hungry -> AF phil3.state = eat)
+CTLSPEC AG (phil4.state = hungry -> AF phil4.state = eat)
+CTLSPEC AG (phil5.state = hungry -> AF phil5.state = eat)
