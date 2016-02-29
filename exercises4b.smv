@@ -8,11 +8,13 @@ ASSIGN
         state = think                   : {think, hungry};
         state = hungry & forkL = 0      : left;
         state = left & forkR = 0        : eat;
+        state = left                    : {hungry, left};
         state = eat                     : {eat, think};
         TRUE                            : state;
     esac;
     next(forkL) := case
         next(state) = left              : i;
+        next(state) = hungry            : 0;
         next(state) = think             : 0;
         TRUE                            : forkL;
     esac;
@@ -22,7 +24,7 @@ ASSIGN
         TRUE                            : forkR;
     esac;
 JUSTICE
-    running & state != eat
+    running & forkR = i
 
 MODULE main 
 VAR
@@ -46,5 +48,5 @@ ASSIGN
 CTLSPEC AG (phil1.state = hungry -> AF phil1.state = eat)
 CTLSPEC AG (phil2.state = hungry -> AF phil2.state = eat)
 CTLSPEC AG (phil3.state = hungry -> AF phil3.state = eat)
-CTLSPEC AG (phil4.state = hungry -> AF phil4.state = eat)
-CTLSPEC AG (phil5.state = hungry -> AF phil5.state = eat)
+CTLSPEC AG (phil4.state = hungry -> AF phil1.state = eat)
+CTLSPEC AG (phil5.state = hungry -> AF phil1.state = eat)
