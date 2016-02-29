@@ -1,0 +1,47 @@
+MODULE proc(semaphore, y_self, y_check)
+VAR
+    state: {noncrit, before, critical, after};
+    running: boolean;
+INIT
+      state = noncrit
+    & running = FALSE
+TRANS
+    ( next(state) = case
+        state = noncrit                 : noncrit;
+        state = critical                : critical;
+        TRUE                            : state;
+        esac
+    | next(state) = case
+        state = noncrit                 : before;
+        state = before & !semaphore     : critical;
+        state = critical                : after;
+        state = after                   : noncrit;
+        TRUE                            : state;
+        esac
+    )
+    &
+    next(semaphore) = case
+        next(state) = before            : TRUE;
+        state = after                   : FALSE;
+        TRUE                            : semaphore;
+        esac
+    & next(y_self) = !y_self
+    & next(y_check) = !y_check
+    & next(running) = !running
+JUSTICE 
+    running = TRUE
+
+MODULE main
+VAR 
+    semaphore   : boolean;
+    y0          : boolean;
+    y1          : boolean;
+    proc0       : proc(semaphore, y0, y1);
+    proc1       : proc(semaphore, y1, y0);
+ASSIGN 
+    init(semaphore) := FALSE;
+    init(y0)        := FALSE;
+    init(y1)        := FALSE;
+LTLSPEC G (!(proc0.state = critical) | !(proc1.state = critical))
+LTLSPEC G (proc0.state = before -> F proc0.state = critical)
+LTLSPEC G (proc1.state = before -> F proc1.state = critical)
