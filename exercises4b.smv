@@ -5,26 +5,26 @@ INIT
     state = think;
 ASSIGN
     next(state) := case
-        state = think                   : {think, hungry};
-        state = hungry & forkL = 0      : left;
-        state = left & forkR = 0        : eat;
-        state = left                    : {hungry, left};
-        state = eat                     : {eat, think};
-        TRUE                            : state;
+        state = think                       : {think, hungry};
+        state = hungry & forkL = 0          : left;
+        state = left & forkR = 0            : eat;
+        state = left                        : {hungry, left};
+        state = eat                         : {eat, think};
+        TRUE                                : state;
     esac;
     next(forkL) := case
-        next(state) = left              : i;
-        next(state) = hungry            : 0;
-        next(state) = think             : 0;
-        TRUE                            : forkL;
+        next(state) = left                  : i;
+        next(state) = hungry                : 0;
+        state = eat & next(state) = think   : 0;
+        TRUE                                : forkL;
     esac;
     next(forkR) := case
-        next(state) = eat               : i;
-        next(state) = think             : 0;
-        TRUE                            : forkR;
+        next(state) = eat                   : i;
+        state = eat & next(state) = think   : 0;
+        TRUE                                : forkR;
     esac;
 JUSTICE
-    running & forkR = i
+    running & state = think
 
 MODULE main 
 VAR
@@ -48,5 +48,5 @@ ASSIGN
 CTLSPEC AG (phil1.state = hungry -> AF phil1.state = eat)
 CTLSPEC AG (phil2.state = hungry -> AF phil2.state = eat)
 CTLSPEC AG (phil3.state = hungry -> AF phil3.state = eat)
-CTLSPEC AG (phil4.state = hungry -> AF phil1.state = eat)
-CTLSPEC AG (phil5.state = hungry -> AF phil1.state = eat)
+CTLSPEC AG (phil4.state = hungry -> AF phil4.state = eat)
+CTLSPEC AG (phil5.state = hungry -> AF phil5.state = eat)
