@@ -1,0 +1,132 @@
+MODULE main
+	VAR
+	-- make meaning of the predicate
+		map : array 0..5 of array 0..4 of {wall, man, stone, empty};
+		finish : boolean;
+		moveLeft : boolean;
+		moveRight : boolean;
+		moveUp : boolean;
+		moveDown : boolean;
+		pushLeft : boolean;
+		pushRight : boolean;
+		pushUp : boolean;
+		pushDown : boolean;
+		manPosX : 0..5;
+		manPosY : 0..4;
+		--stonePosX : 0..5;
+		--stonePosY : 0..4;
+		
+	ASSIGN
+		init(map[0][0]):= wall; init(map[1][0]):= wall; init(map[2][0]):= wall; init(map[3][0]):= wall; init(map[4][0]):= wall; init(map[5][0]):= wall;
+		init(map[0][1]):= wall; init(map[1][1]):= empty; init(map[2][1]):= empty; init(map[3][1]):= empty; init(map[4][1]):= wall; init(map[5][1]):= wall;
+		init(map[0][2]):= wall; init(map[1][2]):= man; init(map[2][2]):= empty; init(map[3][2]):= stone; init(map[4][2]):= empty; init(map[5][2]):= wall;
+		init(map[0][3]):= wall; init(map[1][3]):= empty; init(map[2][3]):= empty; init(map[3][3]):= empty; init(map[4][3]):= empty; init(map[5][3]):= wall;
+		init(map[0][4]):= wall; init(map[1][4]):= empty; init(map[2][4]):= empty; init(map[3][4]):= empty; init(map[4][4]):= empty; init(map[5][4]):= wall;
+		init(manPosX) := 1;
+		init(manPosY) := 2;
+		--init(stonePosX) := 3;
+		--init(stonePosY) := 2;
+		
+	INVAR
+		--stonePosX = 4 & stonePosY = 5 
+		finish <-> map[4][4] = stone;
+		
+	ASSIGN		
+		-- walking
+		next(moveLeft) := 
+			case
+				map[(manPosX - 1)][manPosY] = empty : TRUE;
+				map[(manPosX - 1)][manPosY] = wall : FALSE;
+				map[(manPosX - 1)][manPosY] = stone : next(pushLeft);
+			esac;
+		next(moveRight) := 
+			case
+				map[(manPosX + 1)][manPosY] = empty : TRUE;
+				map[(manPosX + 1)][manPosY] = wall : FALSE;
+				map[(manPosX + 1)][manPosY] = stone : next(pushRight);
+			esac;
+		next(moveUp) := 
+			case
+				map[manPosX][(manPosY + 1)] = empty : TRUE;
+				map[manPosX][(manPosY + 1)] = wall : FALSE;
+				map[manPosX][(manPosY + 1)] = stone : next(pushUp);
+			esac;
+		next(moveDown) := 
+			case
+				map[manPosX][(manPosY - 1)] = empty : TRUE;
+				map[manPosX][(manPosY - 1)] = wall : FALSE;
+				map[manPosX][(manPosY - 1)] = stone : next(pushDown);
+			esac;
+		
+		next(manPosX) :=
+			case
+				next(moveLeft) :  manPosX - 1;
+				next(moveRight) : manPosX + 1 ;
+				next(moveUp) :  manPosY ;
+				next(moveDown) : manPosY ;
+				TRUE : manPosX; -- as default
+			esac;
+		next(manPosY) :=
+			case
+				next(moveLeft) :  manPosY;
+				next(moveRight) : manPosY;
+				next(moveUp) :  manPosX + 1;
+				next(moveDown) : manPosX - 1 ;
+				TRUE : manPosY; -- as default
+			esac;
+			
+		-- find stone and push
+		next(pushLeft) := 
+			case
+				map[(manPosX - 2)][manPosY] = empty : TRUE;
+				TRUE : FALSE;
+			esac;
+		TRANS
+		next(map[(manPosX - 2)][manPosY]) = 
+			case
+				next(pushLeft) : stone;
+				TRUE : map[(manPosX - 2)][manPosY];
+			esac;
+		TRANS
+		next(pushRight) = 
+			case
+				map[(manPosX + 2)][manPosY] = empty : TRUE;
+				TRUE : pushRight;
+			esac;
+		TRANS
+		next(map[(manPosX + 2)][manPosY]) = 
+			case
+				next(pushRight) : stone;
+				TRUE : map[(manPosX + 2)][manPosY];
+			esac;
+		TRANS	
+		next(pushUp) = 
+			case
+				map[manPosX][(manPosY + 2)] = empty: TRUE;
+				TRUE : pushUp;
+			esac;
+		TRANS
+		next(map[manPosX][(manPosY + 2)]) = 
+			case
+				next(pushUp) : stone;
+				TRUE : map[(manPosX + 2)][manPosY];
+			esac;
+		TRANS	
+		next(pushDown) = 
+			case
+				map[manPosX][(manPosY - 2)] = empty: TRUE;
+				TRUE : pushDown;
+			esac;
+		TRANS
+		next(map[manPosX][(manPosY - 2)]) = 
+			case
+				next(pushDown) : stone;
+				TRUE : map[(manPosX - 2)][manPosY];
+			esac;
+			
+	CTLSPEC
+		! EF map[4][4] = stone
+			
+
+		
+	
