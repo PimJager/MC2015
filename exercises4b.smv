@@ -45,6 +45,8 @@ ASSIGN
     init(fork4) := 0;
     init(fork5) := 0;
 
+CTLSPEC AG EF phil1.state = eat 
+CTLSPEC AF AF phil1.state = eat --phil might not get hungry :(
 CTLSPEC AG (phil1.state = hungry -> AF phil1.state = eat)
 CTLSPEC AG (phil2.state = hungry -> AF phil2.state = eat)
 CTLSPEC AG (phil3.state = hungry -> AF phil3.state = eat)

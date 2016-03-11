@@ -12,14 +12,14 @@ ASSIGN
         TRUE                                : state;
         esac;
     next(s) := case
-        next(state) = wait              : i;
-        state = after                   : j;
-        TRUE                            : s;
+        next(state) = wait                  : i;
+        state = after                       : j;
+        TRUE                                : s;
         esac;
     next(y_self) := case
-        next(state) = wait              : TRUE;
-        state = after                   : FALSE;
-        TRUE                            : y_self;
+        next(state) = wait                  : TRUE;
+        state = after                       : FALSE;
+        TRUE                                : y_self;
         esac;
     next(y_check) := y_check;
 JUSTICE 
