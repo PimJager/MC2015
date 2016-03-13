@@ -1,0 +1,36 @@
+MODULE main 
+VAR
+    b0X: 0..3;
+    b0Y: 0..2;
+    mX : 0..3;
+    mY : 0..2;
+    dir: {up, left, down, right};
+DEFINE
+    dx := case
+        dir = left: -1;
+        dir = right: 1;
+        TRUE:        0;
+        esac;
+    dy := case
+        dir = up:   -1;
+        dir = down:  1;
+        TRUE:        0; 
+        esac;
+INVAR 
+      mX  < 4 & mX  >= 0 & mY  < 3 & mY  >= 0 
+    & b0X < 4 & b0X >= 0 & b0Y < 3 & b0Y >= 0;
+INIT
+    mX = 0 & mY = 1 & b0X = 2 & b0Y = 1;
+TRANS
+      next(mX)  = mX  + dx
+    & next(mY)  = mY  + dy
+    & next(b0X) = case 
+            next(mX) = b0X & next(mY) = b0Y: b0X + dx;
+            TRUE:                            b0X;
+        esac
+    & next(b0Y) = case
+            next(mX) = b0X & next(mY) = b0Y: b0Y + dy;
+            TRUE:                            b0Y;
+        esac;
+INVARSPEC 
+    !(b0X = 3 & b0Y = 2)
