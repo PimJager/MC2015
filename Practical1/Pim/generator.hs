@@ -1,10 +1,19 @@
--- ghc generator.hs; rm test.smv; ./generator >> test.smv; NuSMV test.smv
+{-
+
+To run:
+
+ghc generator.hs; rm test.smv; ./generator "../screens/screen.2000" >> test.smv; NuSMV test.smv
+
+replace screen.2000 by the screen you want to check.
+
+-}
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import Control.Monad.Writer
 import qualified Data.Text as T
 import Data.Maybe
+import System.Environment
 
 type ScreenFile = [[Char]] -- [String]
 
@@ -18,6 +27,12 @@ type SMVWriter = Writer T.Text ()
 posC :: (Content -> Bool) -> Screen -> [(Int,Int)]
 posC f = map (\(_,x,y) -> (x,y)) . filter (\(t,_,_) -> f t)
 
+getWidth :: Screen -> Int
+getWidth = foldr (\(_,w,_) m -> max w m) 0
+
+getHeight :: Screen -> Int
+getHeight = foldr (\(_,_,h) m -> max h m) 0
+
 --blocks are named after their starting positions
 blockX :: Int -> Int -> T.Text
 blockX x y = "bl_" <<< showT x <<< "_" <<< showT y <<< "_X"
@@ -28,7 +43,9 @@ range min max = showT min <<< ".." <<< showT max
 
 main :: IO ()
 main = do 
-    file <- readFile "../screens/screen.2000"
+    args <- getArgs
+    let filename = if length args > 0 then head args else "../screens/screen.2000"
+    file <- readFile filename
     let scr = decode $ lines file
     putStr $ T.unpack $ execWriter $ env scr
         where
@@ -42,12 +59,6 @@ main = do
                 noOverlap scr
                 trans scr
                 spec scr
-
-getWidth :: Screen -> Int
-getWidth = foldr (\(_,w,_) m -> max w m) 0
-
-getHeight :: Screen -> Int
-getHeight = foldr (\(_,_,h) m -> max h m) 0
 
 decode :: ScreenFile -> Screen
 decode f = let withPos = zip [0..] (map (zip [0..]) f) in concat $ map decodeLine withPos
@@ -170,6 +181,7 @@ trans scr = do
                         <<< "\t\tTRUE: "<<<blockY x y<<<";\n"
                         <<< "\t\tesac"
 
+--TODO: Fix invariant
 spec :: Screen -> SMVWriter
 spec scr = do
     tellLn "INVARSPEC"
