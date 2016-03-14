@@ -1,0 +1,60 @@
+MODULE main
+VAR
+	dir: {up, left, down, right};
+	bl_3_2_X: 0..5;
+	bl_3_2_Y: 0..4;
+	mX: 0..5;
+	mY: 0..4;
+DEFINE
+	dx := case
+		dir = left: -1;
+		dir = right: 1;
+		TRUE: 0;
+		esac;
+	dy := case
+		dir = up: -1;
+		dir = down: 1;
+		TRUE: 0;
+		esac;
+INIT
+mX=1 & mY=2 & bl_3_2_X=3 & bl_3_2_Y=2;
+INVAR
+	--the blocks and the man should stay within bounds
+	((bl_3_2_X>=0 & bl_3_2_X<=5) & (bl_3_2_Y>=0 & bl_3_2_Y<=4))
+	& (mX>=0 & mX<=5) & (mY>=0 & mY<=4);
+INVAR
+	--the blocks and the man can not overlap with the walls
+	!(bl_3_2_X=0 & bl_3_2_Y=0) & !(mX=0 & mY=0)
+	& !(bl_3_2_X=1 & bl_3_2_Y=0) & !(mX=1 & mY=0)
+	& !(bl_3_2_X=2 & bl_3_2_Y=0) & !(mX=2 & mY=0)
+	& !(bl_3_2_X=3 & bl_3_2_Y=0) & !(mX=3 & mY=0)
+	& !(bl_3_2_X=4 & bl_3_2_Y=0) & !(mX=4 & mY=0)
+	& !(bl_3_2_X=5 & bl_3_2_Y=0) & !(mX=5 & mY=0)
+	& !(bl_3_2_X=0 & bl_3_2_Y=1) & !(mX=0 & mY=1)
+	& !(bl_3_2_X=5 & bl_3_2_Y=1) & !(mX=5 & mY=1)
+	& !(bl_3_2_X=0 & bl_3_2_Y=2) & !(mX=0 & mY=2)
+	& !(bl_3_2_X=5 & bl_3_2_Y=2) & !(mX=5 & mY=2)
+	& !(bl_3_2_X=0 & bl_3_2_Y=3) & !(mX=0 & mY=3)
+	& !(bl_3_2_X=5 & bl_3_2_Y=3) & !(mX=5 & mY=3)
+	& !(bl_3_2_X=0 & bl_3_2_Y=4) & !(mX=0 & mY=4)
+	& !(bl_3_2_X=1 & bl_3_2_Y=4) & !(mX=1 & mY=4)
+	& !(bl_3_2_X=2 & bl_3_2_Y=4) & !(mX=2 & mY=4)
+	& !(bl_3_2_X=3 & bl_3_2_Y=4) & !(mX=3 & mY=4)
+	& !(bl_3_2_X=4 & bl_3_2_Y=4) & !(mX=4 & mY=4)
+	& !(bl_3_2_X=5 & bl_3_2_Y=4) & !(mX=5 & mY=4);
+INVAR
+	--Blocks can not overlap
+	TRUE;
+TRANS
+	  next(mX) = mX  + dx
+	& next(mY) = mY  + dy
+	& next(bl_3_2_X) = case 
+		next(mX)=bl_3_2_X & next(mY)=bl_3_2_Y: bl_3_2_X+dx;
+		TRUE: bl_3_2_X;
+		esac
+	& next(bl_3_2_Y) = case 
+		next(mX)=bl_3_2_X & next(mY)=bl_3_2_Y: bl_3_2_Y+dy;
+		TRUE: bl_3_2_Y;
+		esac;
+INVARSPEC
+	!(bl_3_2_X=4 & bl_3_2_Y=3);

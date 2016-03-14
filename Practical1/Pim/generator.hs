@@ -1,3 +1,4 @@
+-- ghc generator.hs; rm test.smv; ./generator >> test.smv; NuSMV test.smv
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
@@ -14,6 +15,9 @@ type Screen = [Position]
 
 type SMVWriter = Writer T.Text ()
 
+posC :: (Content -> Bool) -> Screen -> [(Int,Int)]
+posC f = map (\(_,x,y) -> (x,y)) . filter (\(t,_,_) -> f t)
+
 --blocks are named after their starting positions
 blockX :: Int -> Int -> T.Text
 blockX x y = "bl_" <<< showT x <<< "_" <<< showT y <<< "_X"
@@ -21,9 +25,6 @@ blockY :: Int -> Int -> T.Text
 blockY x y = "bl_" <<< showT x <<< "_" <<< showT y <<< "_Y"
 range :: Int -> Int -> T.Text
 range min max = showT min <<< ".." <<< showT max
-
-posC :: (Content -> Bool) -> Screen -> [(Int,Int)]
-posC f = map (\(_,x,y) -> (x,y)) . filter (\(t,_,_) -> f t)
 
 main :: IO ()
 main = do 
@@ -39,6 +40,8 @@ main = do
                 inBounds scr
                 noWalls scr
                 noOverlap scr
+                trans scr
+                spec scr
 
 getWidth :: Screen -> Int
 getWidth = foldr (\(_,w,_) m -> max w m) 0
@@ -110,8 +113,8 @@ inBounds :: Screen -> SMVWriter
 inBounds scr = do
     tellLn "INVAR"
     tellLn1 "--the blocks and the man should stay within bounds"
-    tellLn1 $ T.intercalate "\n\t& " $ 
-                map tellInside (posC (\t -> t == Block || t == BlockOnGoal) scr)
+    let blocks = (posC (\t -> t == Block || t == BlockOnGoal) scr)
+    tellLn1 $ T.intercalate "\n\t& " $ map tellInside blocks
     tellLn1 $ "& "<<<inRange "mX" 0 w <<< " & " <<< inRange "mY" 0 h <<< ";"
     where
         w = getWidth scr
@@ -126,25 +129,59 @@ noWalls :: Screen -> SMVWriter
 noWalls scr = do 
     tellLn "INVAR"
     tellLn1 "--the blocks and the man can not overlap with the walls"
-    tellLn1 $ T.intercalate "\n\t& " $ map notPos $ posC (==Wall) scr
+    let walls = posC (==Wall) scr
+    tellLn1 $ (T.intercalate "\n\t& " $ map notPos walls) <<< ";"
     where
         notPos :: (Int, Int) -> T.Text
         notPos (x,y) = (T.intercalate " & " $ 
-                            map (notPos' (x,y)) (posC (\t -> t == Block || t == BlockOnGoal) scr))
+                    map (notPos' (x,y)) (posC (\t -> t == Block || t == BlockOnGoal) scr))
                         <<< " & !(mX="<<<showT x<<<" & mY="<<<showT y<<<")"
         notPos' :: (Int, Int) -> (Int, Int) -> T.Text
         notPos' (wx, wy) (bx, by) = "!("<<<blockX bx by<<<"="<<<showT wx<<<" & "
                                     <<<blockY bx by<<<"="<<<showT wy<<<")"
 
 noOverlap :: Screen -> SMVWriter
-noOverlap src = do
+noOverlap scr = do
     tellLn "INVAR"
     tellLn1 "--Blocks can not overlap"
+    let blocks = (posC (\t -> t == Block || t == BlockOnGoal) scr)
+    tellLn1 $ T.intercalate "\n\t& " ([noOverlap' b1 b2 |b1<-blocks,b2<-blocks,b1<b2] ++ ["TRUE"])
+                <<< ";"
     where
         noOverlap' :: (Int, Int) -> (Int, Int) -> T.Text
         noOverlap' (ax, ay) (bx, by) = "!("<<<blockX ax ay<<<"="<<<blockX bx by<<<" & "
                                             <<<blockY ax ay<<<"="<<<blockY bx by<<<")"
-        
+
+trans :: Screen -> SMVWriter
+trans scr = do
+    tellLn "TRANS"
+    tellLn1 "  next(mX) = mX  + dx"
+    tellLn1 "& next(mY) = mY  + dy"
+    let blocks = (posC (\t -> t == Block || t == BlockOnGoal) scr)
+    tellLn1 $ "& " <<< (T.intercalate "\n\t& " $ map nextB blocks) <<< ";"
+    where
+        nextB :: (Int, Int) -> T.Text
+        nextB (x,y) = "next("<<<blockX x y<<<") = case \n"
+                        <<< "\t\tnext(mX)="<<<blockX x y<<<" & next(mY)="<<<blockY x y<<<": "<<<blockX x y<<<"+dx;\n"
+                        <<< "\t\tTRUE: "<<<blockX x y<<<";\n"
+                        <<< "\t\tesac\n"
+                        <<< "\t& next("<<<blockY x y<<<") = case \n"
+                        <<< "\t\tnext(mX)="<<<blockX x y<<<" & next(mY)="<<<blockY x y<<<": "<<<blockY x y<<<"+dy;\n"
+                        <<< "\t\tTRUE: "<<<blockY x y<<<";\n"
+                        <<< "\t\tesac"
+
+spec :: Screen -> SMVWriter
+spec scr = do
+    tellLn "INVARSPEC"
+    let goals = posC (\t->t==Goal||t==ManOnGoal||t==BlockOnGoal) scr
+    tellLn1 $ (T.intercalate "\n\t& " $ map notPos goals) <<< ";"
+    where --TODO: fix that this is pretty much identical to 'noWalls'
+        notPos :: (Int, Int) -> T.Text
+        notPos (x,y) = (T.intercalate " & " $ 
+                    map (notPos' (x,y)) (posC (\t -> t == Block || t == BlockOnGoal) scr))
+        notPos' :: (Int, Int) -> (Int, Int) -> T.Text
+        notPos' (wx, wy) (bx, by) = "!("<<<blockX bx by<<<"="<<<showT wx<<<" & "
+                                    <<<blockY bx by<<<"="<<<showT wy<<<")"
 
 -- Helper functions for using the SMVWriter
 
