@@ -14,6 +14,7 @@ import Control.Monad.Writer
 import qualified Data.Text as T
 import Data.Maybe
 import System.Environment
+import Data.List
 
 type ScreenFile = [[Char]] -- [String]
 
@@ -41,10 +42,16 @@ blockY x y = "bl_" <<< showT x <<< "_" <<< showT y <<< "_Y"
 range :: Int -> Int -> T.Text
 range min max = showT min <<< ".." <<< showT max
 
+notPos' :: (Int, Int) -> (Int, Int) -> T.Text
+notPos' (wx, wy) (bx, by) = "!("<<<blockX bx by<<<"="<<<showT wx<<<" & "
+                                    <<<blockY bx by<<<"="<<<showT wy<<<")"
+
+---------
+
 main :: IO ()
 main = do 
     args <- getArgs
-    let filename = if length args > 0 then head args else "../screens/screen.2000"
+    let filename = if length args > 0 then head args else "../screens/screen.125"
     file <- readFile filename
     let scr = decode $ lines file
     putStr $ T.unpack $ execWriter $ env scr
@@ -147,9 +154,6 @@ noWalls scr = do
         notPos (x,y) = (T.intercalate " & " $ 
                     map (notPos' (x,y)) (posC (\t -> t == Block || t == BlockOnGoal) scr))
                         <<< " & !(mX="<<<showT x<<<" & mY="<<<showT y<<<")"
-        notPos' :: (Int, Int) -> (Int, Int) -> T.Text
-        notPos' (wx, wy) (bx, by) = "!("<<<blockX bx by<<<"="<<<showT wx<<<" & "
-                                    <<<blockY bx by<<<"="<<<showT wy<<<")"
 
 noOverlap :: Screen -> SMVWriter
 noOverlap scr = do
@@ -185,15 +189,12 @@ trans scr = do
 spec :: Screen -> SMVWriter
 spec scr = do
     tellLn "INVARSPEC"
+    let blocks = permutations $ posC (\t -> t == Block || t == BlockOnGoal) scr
     let goals = posC (\t->t==Goal||t==ManOnGoal||t==BlockOnGoal) scr
-    tellLn1 $ (T.intercalate "\n\t& " $ map notPos goals) <<< ";"
-    where --TODO: fix that this is pretty much identical to 'noWalls'
-        notPos :: (Int, Int) -> T.Text
-        notPos (x,y) = (T.intercalate " & " $ 
-                    map (notPos' (x,y)) (posC (\t -> t == Block || t == BlockOnGoal) scr))
-        notPos' :: (Int, Int) -> (Int, Int) -> T.Text
-        notPos' (wx, wy) (bx, by) = "!("<<<blockX bx by<<<"="<<<showT wx<<<" & "
-                                    <<<blockY bx by<<<"="<<<showT wy<<<")"
+    tellLn1 $ (T.intercalate "\n\t& " $ map (specP goals) blocks) <<< ";"
+    where
+        specP :: [(Int, Int)] -> [(Int, Int)] -> T.Text
+        specP goals blockPerm = T.intercalate " & " $ map (\(b,g) -> notPos' g b) $ zip blockPerm goals
 
 -- Helper functions for using the SMVWriter
 
