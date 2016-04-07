@@ -1,15 +1,15 @@
 PROGRAM:=main
 OBJS:=
 
-CFLAGS:=-O3 -Wextra -Wall -Werror -fno-strict-aliasing -std=gnu11\
-	-I./sylvan/src
+CPPFLAGS:=-g -O3 -Wextra -Wall -Werror -fno-strict-aliasing -std=c++11\
+	-I./sylvan/src -Wno-error=deprecated
 LDLIBS:=-lm -lpthread
 LDFLAGS:=./sylvan/src/libsylvan.a
 
 $(PROGRAM): $(PROGRAM).o $(OBJS)
 	$(CC) $(CFLAGS) $< $(OBJS) $(LDFLAGS) $(LDLIBS) -o $@
 
-%.o: %.c %.h
+%.o: %.cpp %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
