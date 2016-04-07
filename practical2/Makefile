@@ -1,10 +1,12 @@
 PROGRAM:=main
 OBJS:=
+CC = g++
 
-CPPFLAGS:=-g -O3 -Wextra -Wall -Werror -fno-strict-aliasing -std=c++11\
-	-I./sylvan/src -Wno-error=deprecated
+CPPFLAGS:=-g -O3 -Wall -Werror -fno-strict-aliasing -stdlib=libc++ -std=c++11\
+	-I./sylvan/src -Wno-error=deprecated -Wno-error=unused-function\
+	-Wc++11-extensions
 LDLIBS:=-lm -lpthread
-LDFLAGS:=./sylvan/src/libsylvan.a
+LDFLAGS:=./sylvan/src/libsylvan.a 
 
 $(PROGRAM): $(PROGRAM).o $(OBJS)
 	$(CC) $(CFLAGS) $< $(OBJS) $(LDFLAGS) $(LDLIBS) -o $@
