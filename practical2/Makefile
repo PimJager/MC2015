@@ -1,10 +1,10 @@
-PROGRAM:=main
+PROGRAM:=screen2000
 OBJS:=
 CC = g++
 
 CPPFLAGS:=-g -O3 -Wall -Werror -fno-strict-aliasing -stdlib=libc++ -std=c++11\
 	-I./sylvan/src -Wno-error=deprecated -Wno-error=unused-function\
-	-Wc++11-extensions
+	-Wc++11-extensions -Wno-error-unused-variable
 LDLIBS:=-lm -lpthread
 LDFLAGS:=./sylvan/src/libsylvan.a 
 
