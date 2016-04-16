@@ -1,0 +1,34 @@
+MODULE main 
+VAR
+    block1_x0;
+    block1_x1;
+    block1_x2;
+    block1_x3;
+    block1_y0;
+    block1_y1;
+    block1_y2;
+    man_x0;
+    man_x1;
+    man_x2;
+    man_x3;
+    man_y0;
+    man_y1;
+    man_y2;
+INIT
+      block1_x2 = true
+    & block1_y1 = true
+    & man_x3 = true
+    & man_y0 = true;
+TRANS
+    -- up
+        --if man is on 0 0
+        man_y0 = true & man_x0 = true 
+            -> (man_y0 = false & man_y1 = true) & 
+                (block1_y1 = true & block1_x0 & true) 
+                    -> (block1_y1 = false & block1_y2 = true)
+        --etc. etc. etc.
+    -- or down
+
+    -- or left
+
+    -- or right
