@@ -140,7 +140,7 @@ Bdd propTrans(const SokobanVars vars){
         for (int y=0; y<vars.rows-1; y++){
             //--up
             Bdd man_in_pos = mX[x] * mY[y];
-            //how to deal with next... :/
+            //how to deal with next... :/git 
             //Bdd man_up = mx[x] * !mY[y] *
         }
     }
@@ -187,12 +187,27 @@ int main(int argc, char* argv[]){
     Bdd error = staticError(vars);
     BddGraphGenerate(error, "error");
 
+    LACE_ME;
     Bdd trans = propTrans(vars);
     BddGraphGenerate(trans, "trans");
+
 
     std::cerr << screen;
 
     return 0;
+}
+
+void exampletrans(){
+    Bdd x = Bdd::bddVar(100); //current state needs even variable numbers
+    Bdd y = Bdd::bddVar(102);
+    Bdd cur = x * y; 
+    Bdd xp = Bdd::bddVar(101); //next state needs odd variable numbers
+    Bdd yp = Bdd::bddVar(103); //i.e. yp = y' (y-prime)
+    Bdd trans = sylvan_imp(x.GetBDD(), (!xp).GetBDD());
+    Bdd next = cur.RelPrev(trans, x*xp);
+    BddGraphGenerate(cur, "cur");
+    BddGraphGenerate(trans, "trans");
+    BddGraphGenerate(next, "next");
 }
 
 void BddPrint(Bdd a){
