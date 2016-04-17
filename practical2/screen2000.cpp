@@ -53,7 +53,7 @@ SokobanVars buildScreen(const Screen& screen, int rows, int cols)
     LACE_ME;
     int maxX    = cols-1; //inclusive
     int maxY    = rows-1; //inclusive
-    int numBlocks  = 0+1;
+    int numBlocks  = 1;
 
     int bddVarCounter = 0;
     //-- Initialize the variables
@@ -91,46 +91,69 @@ Bdd propInit(SokobanVars vars){
     BlockVec blockY = vars.blockY;
     ManVec manX = vars.manX;
     ManVec manY = vars.manY;
-    //-- result= (∀x,y.Ɐ(b∈blocks). !block{b}_{X/Y}{}) 
-    //              ⋁ (Ɐ(b∈blocks). block{b}_{X/Y}{bx / by})
-    //   similar for man_{X/Y}
-    //--make the formula for everything is empty
-    Bdd empty = Bdd::bddOne();
-    for(int i=0; i<blockX.size(); i++){
-        for(int j=0; j<blockX[i].size(); j++){ //block i on position x=j
-            empty = empty * !blockX[i][j];
-        }
-        for(int j=0; j<blockY[i].size(); j++){ //block i on position y=j
-            empty = empty * !blockY[i][j];
-        }
-    }
-    for(int j=0; j<vars.cols; j++){
-        empty = empty * !manX[j];
-    }
-    for(int j=0; j<vars.rows; j++){
-        empty = empty * !manY[j];
-    }
     //--make the formula for blocks and man in position
     Bdd contents = Bdd::bddOne();
     int i=0;
-    for(int x=0; x<vars.cols; x++){
-        for(int y=0; y<vars.rows; y++){
-            if(screen[y][x] == Field::BLOCK 
-                || screen[y][x] == Field::BLOCK_ON_GOAL) {
-                std::cout << "Block on: ("<< x <<","<< y <<")"<< std::endl;
-                contents = contents * blockX[i][x];
-                contents = contents * blockY[i][y];
-                i++;
-            } else if(screen[y][x] == Field::MAN 
-                || screen[y][x] == Field::MAN_ON_GOAL) {
-                std::cout << "Man on: ("<< x <<","<< y <<")"<< std::endl;
-                contents = contents * manX[x];
-                contents = contents * manY[y];
+    std::cout <<"init: true";
+    while(i<blockX.size()){
+        for(int x=0; x<vars.cols; x++){
+            std::cout<<"\t";
+            bool rowHasBlock = false;
+            bool rowHasMan = false;
+            for(int y=0; y<vars.rows; y++){
+                if(screen[y][x] == Field::BLOCK 
+                    || screen[y][x] == Field::BLOCK_ON_GOAL) {
+                    std::cout<<" ∧ b["<<i<<"]y"<<y;
+                    rowHasBlock = true;
+                    contents = contents * blockY[i][y];
+                } else {
+                    std::cout<<" ∧ ¬b["<<i<<"]y"<<y;
+                    contents = contents * !blockY[i][y];
+                }
+                if(i == 0 ) { //only do the stuff for the man on the first run
+                    if(screen[y][x] == Field::MAN 
+                        || screen[y][x] == Field::MAN_ON_GOAL) {
+                        std::cout<<" ∧ my"<<y;
+                        rowHasMan = true;
+                        contents = contents * manY[y];
+                    } else {
+                        std::cout<<" ∧ ¬my"<<y;
+                        contents = contents * !manY[y];
+                    }
+                }
             }
+            if(rowHasBlock) {
+                std::cout<<" ∧ b["<<i<<"]x"<<x;
+                contents = contents * blockX[i][x];
+            } else {
+                std::cout<< " ∧ ¬b["<<i<<"]x"<<x;
+                contents = contents * !blockX[i][x];
+            }
+            if(rowHasMan) {
+                std::cout <<" ∧ mx"<<x;
+                contents = contents * manX[x];
+            } else {
+                std::cout <<" ∧ ¬mx"<<x;
+                contents = contents * !manX[x];
+            }
+            std::cout<<std::endl;
         }
+        i++;
     }
-    Bdd result = sylvan_or(empty.GetBDD(), contents.GetBDD());
-    return result;
+    //Bdd result = sylvan_or(empty.GetBDD(), contents.GetBDD());
+    return contents;
+}
+
+Bdd staticInit(SokobanVars vars){
+    Screen screen = vars.screen;
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    ManVec mX = vars.manX;
+    ManVec mY = vars.manY;
+    return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
+            * !bY[0][0] * bY[0][1] * bY[0][2]
+            * !mX[0] * !mX[1] * !mX[2] * mX[3]
+            * !mY[0] * !mY[1] * mY[2];
 }
 
 void setUpSylvan(){
@@ -161,6 +184,11 @@ int main(int argc, char* argv[]){
     setUpSylvan();
     
     SokobanVars vars = buildScreen(screen, rows, cols);
+    std::cout << "VARS: " << std::endl
+                <<"\t cols: "<< vars.cols <<", rows: "<<vars.rows<< std::endl
+                <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
+                <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
+                <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
     Bdd init = propInit(vars);
     BddGraphGenerate(init, "init");
 
