@@ -8,12 +8,18 @@
 #include <sylvan.h>
 #include <sylvan_obj.hpp>
 
+using namespace sylvan;
+
 enum class Field {EMPTY, WALL, MAN, BLOCK, GOAL, BLOCK_ON_GOAL, MAN_ON_GOAL};
 static std::vector<std::string> readfile(std::istream& input);
 static size_t max_line_length(std::vector<std::string>& lines);
 static std::vector<std::vector<Field>> parse_screen(std::vector<std::string> lines, size_t rows, size_t cols);
 template<typename T>
 static std::ostream& operator<<(std::ostream& stream, std::vector<std::vector<T>>& matrix);
+
+using Screen = std::vector<std::vector<Field>>;
+using ManVec = std::vector<Bdd>;
+using BlockVec = std::vector<std::vector<Bdd>>;
 
 #define block1_x0 0
 #define block1_x1 1
@@ -30,14 +36,71 @@ static std::ostream& operator<<(std::ostream& stream, std::vector<std::vector<T>
 #define man_y1 11
 #define man_y2 12
 
-void screen() {
-    int maxX    = 1+2; //fake calcualtion at runtime
-    int maxY    = 1+1; //fake calcualtion at runtime
-    int blocks  = 0+1;
+void buildScreen(const Screen& screen) {
+    LACE_ME;
+    int maxX    = 1+2; //fake calcualtion at runtime //inclusive
+    int maxY    = 1+1; //fake calcualtion at runtime //inclusive
+    int numBlocks  = 0+1;
 
-    //-- Initialize the array of blocks
-    
+    int bddVarCounter = 0;
+    //-- Initialize the variables
+    //-- block{i}_x{j} and block{i}_y{j}
+    std::vector<std::vector<Bdd>> blockX;
+    std::vector<std::vector<Bdd>> blockY;
+    for(int i=0; i<numBlocks; i++){
+        for(int j=0; j<=maxX; j++) {
+            std::vector<Bdd> row;
+            row.push_back(Bdd::bddVar(bddVarCounter++));
+            blockX.push_back(row);
+        }
+        for(int j=0; j<=maxY; j++) {
+            std::vector<Bdd> row;
+            row.push_back(Bdd::bddVar(bddVarCounter++));
+            blockY.push_back(row);
+        }
+    }
+    //--manX_{j} and manY_{j}
+    std::vector<Bdd> manX;
+    std::vector<Bdd> manY;
+    for(int j=0; j<=maxX; j++) {
+        manX.push_back(Bdd::bddVar(bddVarCounter++));
+    }
+    for(int j=0; j<=maxY; j++) {
+        manY.push_back(Bdd::bddVar(bddVarCounter++));
+    }
 }
+
+// Bdd propInit(Screen& screen, BlockVec& blockX, BlockVec& blockY,
+//          ManVec manX, ManVec manY){
+//     LACE_ME;
+//     //-- result= (∀x,y.Ɐ(b∈blocks). !block{b}_{X/Y}{}) 
+//     //              ⋁ (Ɐ(b∈blocks). block{b}_{X/Y}{bx / by})
+//     //   similar for man_{X/Y}
+//     Bdd notBlocks = Bdd::bddOne();
+//     for(int i=0; i<blockX.size(); i++){
+//         for(int j=0; j<blockX[i].size(); j++){ //block i on position x=j
+//             notBlocks = notBlocks * !blockX[i][j];
+//         }
+//         for(int j=0; j<blockY[i].size(); i++){ //block i on position y=j
+//             notBlocks = notBlocks * !blockY[i][j];
+//         }
+//     }
+//     Bdd hasBlocks = Bdd::bddOne();
+//     int i=0;
+//     for(int x=0; x<blockX.size(); x++){
+//         for(int y=0; y<blockY.size(); y++){
+//             if(screen[x][y] == Field::BLOCK 
+//                 || screen[x][y] == Field::BLOCK_ON_GOAL) {
+//                 std::cout << "Block on: ("<< x <<","<< y <<")"<< std::endl;
+//                 hasBlocks = hasBlocks * blockX[i][x];
+//                 hasBlocks = hasBlocks * blockY[i][y];
+//             } 
+//         }
+//     }
+//     Bdd blocks = sylvan_or(notBlocks.GetBDD(), hasBlocks.GetBDD());
+//     Bdd result = blocks;
+//     return result;
+// }
 
 void setUpSylvan(){
     lace_init(0, 0); //auto #workers and task_deque
@@ -65,6 +128,7 @@ int main(int argc, char* argv[]){
 
     //setup sylvan
     setUpSylvan();
+    buildScreen(screen);
 
     std::cerr << screen;
 
