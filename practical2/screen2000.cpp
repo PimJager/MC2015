@@ -93,53 +93,6 @@ Bdd propInit(SokobanVars vars){
     ManVec manY = vars.manY;
     //--make the formula for blocks and man in position
     Bdd contents = Bdd::bddOne();
-    int i=0;
-    std::cout <<"init: true";
-    while(i<blockX.size()){
-        for(int x=0; x<vars.cols; x++){
-            std::cout<<"\t";
-            bool rowHasBlock = false;
-            bool rowHasMan = false;
-            for(int y=0; y<vars.rows; y++){
-                if(screen[y][x] == Field::BLOCK 
-                    || screen[y][x] == Field::BLOCK_ON_GOAL) {
-                    std::cout<<" ∧ b["<<i<<"]y"<<y;
-                    rowHasBlock = true;
-                    contents = contents * blockY[i][y];
-                } else {
-                    std::cout<<" ∧ ¬b["<<i<<"]y"<<y;
-                    contents = contents * !blockY[i][y];
-                }
-                if(i == 0 ) { //only do the stuff for the man on the first run
-                    if(screen[y][x] == Field::MAN 
-                        || screen[y][x] == Field::MAN_ON_GOAL) {
-                        std::cout<<" ∧ my"<<y;
-                        rowHasMan = true;
-                        contents = contents * manY[y];
-                    } else {
-                        std::cout<<" ∧ ¬my"<<y;
-                        contents = contents * !manY[y];
-                    }
-                }
-            }
-            if(rowHasBlock) {
-                std::cout<<" ∧ b["<<i<<"]x"<<x;
-                contents = contents * blockX[i][x];
-            } else {
-                std::cout<< " ∧ ¬b["<<i<<"]x"<<x;
-                contents = contents * !blockX[i][x];
-            }
-            if(rowHasMan) {
-                std::cout <<" ∧ mx"<<x;
-                contents = contents * manX[x];
-            } else {
-                std::cout <<" ∧ ¬mx"<<x;
-                contents = contents * !manX[x];
-            }
-            std::cout<<std::endl;
-        }
-        i++;
-    }
     //Bdd result = sylvan_or(empty.GetBDD(), contents.GetBDD());
     return contents;
 }
@@ -154,6 +107,27 @@ Bdd staticInit(SokobanVars vars){
             * !bY[0][0] * bY[0][1] * bY[0][2]
             * !mX[0] * !mX[1] * !mX[2] * mX[3]
             * !mY[0] * !mY[1] * mY[2];
+}
+
+Bdd propError(SokobanVars vars){
+    LACE_ME;
+    Screen screen = vars.screen;
+    BlockVec blockX = vars.blockX;
+    BlockVec blockY = vars.blockY;
+    ManVec manX = vars.manX;
+    ManVec manY = vars.manY;
+    //--make the formula for blocks and man in position
+    Bdd contents = Bdd::bddOne();
+    return contents;
+}
+
+Bdd staticError(SokobanVars vars){
+    LACE_ME;
+    //error is when two blocks overlap or when a block overlaps with a wall
+    //transitions for man overlapping with wall are not generated
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    return bX[0][0] * bY[0][0];
 }
 
 void setUpSylvan(){
@@ -191,6 +165,8 @@ int main(int argc, char* argv[]){
                 <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
     Bdd init = staticInit(vars);
     BddGraphGenerate(init, "init");
+    Bdd error = staticError(vars);
+    BddGraphGenerate(error, "error");
 
     std::cerr << screen;
 
