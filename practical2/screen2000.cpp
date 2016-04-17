@@ -216,7 +216,7 @@ void BddGraphGenerate(Bdd a, std::string suffix){
         perror ("Error opening file");
     else
     {
-        sylvan_fprintdot(pFile,a.GetBDD());
+        sylvan_fprintdot_nc(pFile,a.GetBDD());
     }
     fclose (pFile);
 }
