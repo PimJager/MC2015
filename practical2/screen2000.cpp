@@ -130,6 +130,23 @@ Bdd staticError(SokobanVars vars){
     return bX[0][0] * bY[0][0];
 }
 
+Bdd propTrans(const SokobanVars vars){
+    LACE_ME;
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    ManVec mX = vars.manX;
+    ManVec mY = vars.manY;
+    for(int x=0; x<vars.cols; x++){
+        for (int y=0; y<vars.rows-1; y++){
+            //--up
+            Bdd man_in_pos = mX[x] * mY[y];
+            //how to deal with next... :/
+            //Bdd man_up = mx[x] * !mY[y] *
+        }
+    }
+    return Bdd::bddOne();
+}
+
 void setUpSylvan(){
     lace_init(0, 0); //auto #workers and task_deque
     lace_startup(0, NULL, NULL); //auto stack size
@@ -163,10 +180,15 @@ int main(int argc, char* argv[]){
                 <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
                 <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
                 <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
+    
     Bdd init = staticInit(vars);
     BddGraphGenerate(init, "init");
+
     Bdd error = staticError(vars);
     BddGraphGenerate(error, "error");
+
+    Bdd trans = propTrans(vars);
+    BddGraphGenerate(trans, "trans");
 
     std::cerr << screen;
 

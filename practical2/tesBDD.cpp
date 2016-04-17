@@ -29,11 +29,9 @@ VOID_TASK_0(simple_cxx)
     // transition
     //x and y = x * y
     Bdd R1 = !x * xP * y *= yP * z *= zP;
-	Bdd check = x;
-	check = check * xP;
     Bdd R2 = x * xP * !y * yP * z *= zP;
     Bdd R3 = x *= xP * y *= yP * z *= !zP;
-    Bdd R = R1+R2+R3+check;
+    Bdd R = R1+R2+R3;
 
     BddPrint(R1);
     BddGraphGenerate(R1);
