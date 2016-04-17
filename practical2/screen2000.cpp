@@ -16,6 +16,8 @@ static size_t max_line_length(std::vector<std::string>& lines);
 static std::vector<std::vector<Field>> parse_screen(std::vector<std::string> lines, size_t rows, size_t cols);
 template<typename T>
 static std::ostream& operator<<(std::ostream& stream, std::vector<std::vector<T>>& matrix);
+void BddGraphGenerate(Bdd a, std::string suffix);
+void BddPrint(Bdd a);
 
 using Screen = std::vector<std::vector<Field>>;
 using ManVec = std::vector<Bdd>;
@@ -36,10 +38,21 @@ using BlockVec = std::vector<std::vector<Bdd>>;
 #define man_y1 11
 #define man_y2 12
 
-void buildScreen(const Screen& screen) {
+struct SokobanVars {
+    BlockVec blockX;
+    BlockVec blockY;
+    ManVec manX;
+    ManVec manY;
+    Screen screen;
+    int rows;
+    int cols;
+};
+
+SokobanVars buildScreen(const Screen& screen, int rows, int cols) 
+{
     LACE_ME;
-    int maxX    = 1+2; //fake calcualtion at runtime //inclusive
-    int maxY    = 1+1; //fake calcualtion at runtime //inclusive
+    int maxX    = cols-1; //inclusive
+    int maxY    = rows-1; //inclusive
     int numBlocks  = 0+1;
 
     int bddVarCounter = 0;
@@ -48,16 +61,16 @@ void buildScreen(const Screen& screen) {
     std::vector<std::vector<Bdd>> blockX;
     std::vector<std::vector<Bdd>> blockY;
     for(int i=0; i<numBlocks; i++){
+        std::vector<Bdd> rowX;
+        std::vector<Bdd> rowY;
         for(int j=0; j<=maxX; j++) {
-            std::vector<Bdd> row;
-            row.push_back(Bdd::bddVar(bddVarCounter++));
-            blockX.push_back(row);
+            rowX.push_back(Bdd::bddVar(bddVarCounter++));
         }
         for(int j=0; j<=maxY; j++) {
-            std::vector<Bdd> row;
-            row.push_back(Bdd::bddVar(bddVarCounter++));
-            blockY.push_back(row);
+            rowY.push_back(Bdd::bddVar(bddVarCounter++));
         }
+        blockX.push_back(rowX);
+        blockY.push_back(rowY);
     }
     //--manX_{j} and manY_{j}
     std::vector<Bdd> manX;
@@ -68,39 +81,57 @@ void buildScreen(const Screen& screen) {
     for(int j=0; j<=maxY; j++) {
         manY.push_back(Bdd::bddVar(bddVarCounter++));
     }
+    return {blockX, blockY, manX, manY, screen, rows, cols};
 }
 
-// Bdd propInit(Screen& screen, BlockVec& blockX, BlockVec& blockY,
-//          ManVec manX, ManVec manY){
-//     LACE_ME;
-//     //-- result= (∀x,y.Ɐ(b∈blocks). !block{b}_{X/Y}{}) 
-//     //              ⋁ (Ɐ(b∈blocks). block{b}_{X/Y}{bx / by})
-//     //   similar for man_{X/Y}
-//     Bdd notBlocks = Bdd::bddOne();
-//     for(int i=0; i<blockX.size(); i++){
-//         for(int j=0; j<blockX[i].size(); j++){ //block i on position x=j
-//             notBlocks = notBlocks * !blockX[i][j];
-//         }
-//         for(int j=0; j<blockY[i].size(); i++){ //block i on position y=j
-//             notBlocks = notBlocks * !blockY[i][j];
-//         }
-//     }
-//     Bdd hasBlocks = Bdd::bddOne();
-//     int i=0;
-//     for(int x=0; x<blockX.size(); x++){
-//         for(int y=0; y<blockY.size(); y++){
-//             if(screen[x][y] == Field::BLOCK 
-//                 || screen[x][y] == Field::BLOCK_ON_GOAL) {
-//                 std::cout << "Block on: ("<< x <<","<< y <<")"<< std::endl;
-//                 hasBlocks = hasBlocks * blockX[i][x];
-//                 hasBlocks = hasBlocks * blockY[i][y];
-//             } 
-//         }
-//     }
-//     Bdd blocks = sylvan_or(notBlocks.GetBDD(), hasBlocks.GetBDD());
-//     Bdd result = blocks;
-//     return result;
-// }
+Bdd propInit(SokobanVars vars){
+    LACE_ME;
+    Screen screen = vars.screen;
+    BlockVec blockX = vars.blockX;
+    BlockVec blockY = vars.blockY;
+    ManVec manX = vars.manX;
+    ManVec manY = vars.manY;
+    //-- result= (∀x,y.Ɐ(b∈blocks). !block{b}_{X/Y}{}) 
+    //              ⋁ (Ɐ(b∈blocks). block{b}_{X/Y}{bx / by})
+    //   similar for man_{X/Y}
+    //--make the formula for everything is empty
+    Bdd empty = Bdd::bddOne();
+    for(int i=0; i<blockX.size(); i++){
+        for(int j=0; j<blockX[i].size(); j++){ //block i on position x=j
+            empty = empty * !blockX[i][j];
+        }
+        for(int j=0; j<blockY[i].size(); j++){ //block i on position y=j
+            empty = empty * !blockY[i][j];
+        }
+    }
+    for(int j=0; j<vars.cols; j++){
+        empty = empty * !manX[j];
+    }
+    for(int j=0; j<vars.rows; j++){
+        empty = empty * !manY[j];
+    }
+    //--make the formula for blocks and man in position
+    Bdd contents = Bdd::bddOne();
+    int i=0;
+    for(int x=0; x<vars.cols; x++){
+        for(int y=0; y<vars.rows; y++){
+            if(screen[y][x] == Field::BLOCK 
+                || screen[y][x] == Field::BLOCK_ON_GOAL) {
+                std::cout << "Block on: ("<< x <<","<< y <<")"<< std::endl;
+                contents = contents * blockX[i][x];
+                contents = contents * blockY[i][y];
+                i++;
+            } else if(screen[y][x] == Field::MAN 
+                || screen[y][x] == Field::MAN_ON_GOAL) {
+                std::cout << "Man on: ("<< x <<","<< y <<")"<< std::endl;
+                contents = contents * manX[x];
+                contents = contents * manY[y];
+            }
+        }
+    }
+    Bdd result = sylvan_or(empty.GetBDD(), contents.GetBDD());
+    return result;
+}
 
 void setUpSylvan(){
     lace_init(0, 0); //auto #workers and task_deque
@@ -128,11 +159,38 @@ int main(int argc, char* argv[]){
 
     //setup sylvan
     setUpSylvan();
-    buildScreen(screen);
+    
+    SokobanVars vars = buildScreen(screen, rows, cols);
+    Bdd init = propInit(vars);
+    BddGraphGenerate(init, "init");
 
     std::cerr << screen;
 
     return 0;
+}
+
+void BddPrint(Bdd a){
+    if(!a.isTerminal()){
+        std::cout << "NODE:  "<< a.TopVar()  << std::endl;    
+        
+        BddPrint(a.Then());
+        BddPrint(a.Else());
+    }else{
+        std::cout << "TERMINAL:  "<< (a==Bdd::bddOne()) << (a==Bdd::bddZero())  << std::endl;
+    }
+}
+
+void BddGraphGenerate(Bdd a, std::string suffix){
+    FILE * pFile;
+    std::string path = std::string("testBDD_")+suffix+std::string(".dot");
+    pFile = fopen (path.c_str(), "w");
+    if (pFile == NULL) 
+        perror ("Error opening file");
+    else
+    {
+        sylvan_fprintdot(pFile,a.GetBDD());
+    }
+    fclose (pFile);
 }
 
 

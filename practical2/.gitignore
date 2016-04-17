@@ -1,3 +1,4 @@
 *.o
 main
 screen2000
+*.dot
