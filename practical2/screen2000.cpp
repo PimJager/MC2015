@@ -189,7 +189,7 @@ int main(int argc, char* argv[]){
                 <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
                 <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
                 <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
-    Bdd init = propInit(vars);
+    Bdd init = staticInit(vars);
     BddGraphGenerate(init, "init");
 
     std::cerr << screen;
