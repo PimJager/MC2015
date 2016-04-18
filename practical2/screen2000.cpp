@@ -48,6 +48,8 @@ struct SokobanVars {
     int cols;
 };
 
+int inc2(int& i){ int old=i; i=i+2; std::cout<<i<<std::endl; return old;}
+
 SokobanVars buildScreen(const Screen& screen, int rows, int cols) 
 {
     LACE_ME;
@@ -64,10 +66,10 @@ SokobanVars buildScreen(const Screen& screen, int rows, int cols)
         std::vector<Bdd> rowX;
         std::vector<Bdd> rowY;
         for(int j=0; j<=maxX; j++) {
-            rowX.push_back(Bdd::bddVar(bddVarCounter++));
+            rowX.push_back(Bdd::bddVar(inc2(bddVarCounter)));
         }
         for(int j=0; j<=maxY; j++) {
-            rowY.push_back(Bdd::bddVar(bddVarCounter++));
+            rowY.push_back(Bdd::bddVar(inc2(bddVarCounter)));
         }
         blockX.push_back(rowX);
         blockY.push_back(rowY);
@@ -76,10 +78,10 @@ SokobanVars buildScreen(const Screen& screen, int rows, int cols)
     std::vector<Bdd> manX;
     std::vector<Bdd> manY;
     for(int j=0; j<=maxX; j++) {
-        manX.push_back(Bdd::bddVar(bddVarCounter++));
+        manX.push_back(Bdd::bddVar(inc2(bddVarCounter)));
     }
     for(int j=0; j<=maxY; j++) {
-        manY.push_back(Bdd::bddVar(bddVarCounter++));
+        manY.push_back(Bdd::bddVar(inc2(bddVarCounter)));
     }
     return {blockX, blockY, manX, manY, screen, rows, cols};
 }
@@ -103,6 +105,7 @@ Bdd staticInit(SokobanVars vars){
     BlockVec bY = vars.blockY;
     ManVec mX = vars.manX;
     ManVec mY = vars.manY;
+    //return !bX[0][0] * !bX[0][1];// * bX[0][2] * !bX[0][3];
     return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
             * !bY[0][0] * bY[0][1] * bY[0][2]
             * !mX[0] * !mX[1] * !mX[2] * mX[3]
@@ -187,7 +190,6 @@ int main(int argc, char* argv[]){
     Bdd error = staticError(vars);
     BddGraphGenerate(error, "error");
 
-    LACE_ME;
     Bdd trans = propTrans(vars);
     BddGraphGenerate(trans, "trans");
 
@@ -198,6 +200,7 @@ int main(int argc, char* argv[]){
 }
 
 void exampletrans(){
+    LACE_ME;
     Bdd x = Bdd::bddVar(100); //current state needs even variable numbers
     Bdd y = Bdd::bddVar(102);
     Bdd cur = x * y; 
