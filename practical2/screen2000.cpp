@@ -40,15 +40,17 @@ using BlockVec = std::vector<std::vector<Bdd>>;
 
 struct SokobanVars {
     BlockVec blockX;
+    BlockVec blockXP;
     BlockVec blockY;
+    BlockVec blockYP;
     ManVec manX;
+    ManVec manXP;
     ManVec manY;
+    ManVec manYP;
     Screen screen;
     int rows;
     int cols;
 };
-
-int inc2(int& i){ int old=i; i=i+2; std::cout<<i<<std::endl; return old;}
 
 SokobanVars buildScreen(const Screen& screen, int rows, int cols) 
 {
@@ -61,32 +63,44 @@ SokobanVars buildScreen(const Screen& screen, int rows, int cols)
     //-- Initialize the variables
     //-- block{i}_x{j} and block{i}_y{j}
     std::vector<std::vector<Bdd>> blockX;
+    std::vector<std::vector<Bdd>> blockXP;
     std::vector<std::vector<Bdd>> blockY;
+    std::vector<std::vector<Bdd>> blockYP;
     for(int i=0; i<numBlocks; i++){
         std::vector<Bdd> rowX;
+        std::vector<Bdd> rowXP;
         std::vector<Bdd> rowY;
+        std::vector<Bdd> rowYP;
         for(int j=0; j<=maxX; j++) {
-            rowX.push_back(Bdd::bddVar(inc2(bddVarCounter)));
+            rowX.push_back(Bdd::bddVar(bddVarCounter++));
+            rowXP.push_back(Bdd::bddVar(bddVarCounter++));
         }
         for(int j=0; j<=maxY; j++) {
-            rowY.push_back(Bdd::bddVar(inc2(bddVarCounter)));
+            rowY.push_back(Bdd::bddVar(bddVarCounter++));
+            rowYP.push_back(Bdd::bddVar(bddVarCounter++));
         }
         blockX.push_back(rowX);
+        blockXP.push_back(rowXP);
         blockY.push_back(rowY);
+        blockYP.push_back(rowYP);
     }
     //--manX_{j} and manY_{j}
     std::vector<Bdd> manX;
+    std::vector<Bdd> manXP;
     std::vector<Bdd> manY;
+    std::vector<Bdd> manYP;
     for(int j=0; j<=maxX; j++) {
-        manX.push_back(Bdd::bddVar(inc2(bddVarCounter)));
+        manX.push_back(Bdd::bddVar(bddVarCounter++));
+        manXP.push_back(Bdd::bddVar(bddVarCounter++));
     }
     for(int j=0; j<=maxY; j++) {
-        manY.push_back(Bdd::bddVar(inc2(bddVarCounter)));
+        manY.push_back(Bdd::bddVar(bddVarCounter++));
+        manYP.push_back(Bdd::bddVar(bddVarCounter++));
     }
-    return {blockX, blockY, manX, manY, screen, rows, cols};
+    return {blockX, blockXP, blockY, blockYP, manX, manXP, manY, manYP, screen, rows, cols};
 }
 
-Bdd propInit(SokobanVars vars){
+Bdd propInit(const SokobanVars vars){
     LACE_ME;
     Screen screen = vars.screen;
     BlockVec blockX = vars.blockX;
@@ -99,20 +113,19 @@ Bdd propInit(SokobanVars vars){
     return contents;
 }
 
-Bdd staticInit(SokobanVars vars){
+Bdd staticInit(const SokobanVars vars){
     Screen screen = vars.screen;
     BlockVec bX = vars.blockX;
     BlockVec bY = vars.blockY;
     ManVec mX = vars.manX;
     ManVec mY = vars.manY;
-    //return !bX[0][0] * !bX[0][1];// * bX[0][2] * !bX[0][3];
     return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
             * !bY[0][0] * bY[0][1] * bY[0][2]
             * !mX[0] * !mX[1] * !mX[2] * mX[3]
             * !mY[0] * !mY[1] * mY[2];
 }
 
-Bdd propError(SokobanVars vars){
+Bdd propError(const SokobanVars vars){
     LACE_ME;
     Screen screen = vars.screen;
     BlockVec blockX = vars.blockX;
@@ -124,30 +137,78 @@ Bdd propError(SokobanVars vars){
     return contents;
 }
 
-Bdd staticError(SokobanVars vars){
+Bdd staticError(const SokobanVars vars){
     LACE_ME;
     //error is when two blocks overlap or when a block overlaps with a wall
+    //or when the man overlaps with a wall
     //transitions for man overlapping with wall are not generated
     BlockVec bX = vars.blockX;
     BlockVec bY = vars.blockY;
     return bX[0][0] * bY[0][0];
 }
 
-Bdd propTrans(const SokobanVars vars){
+
+struct TransCube {
+    Bdd trans;
+    BddSet cube;
+};
+TransCube propTrans(const SokobanVars vars){
     LACE_ME;
     BlockVec bX = vars.blockX;
+    BlockVec bXP = vars.blockXP;
     BlockVec bY = vars.blockY;
+    BlockVec bYP = vars.blockYP;
     ManVec mX = vars.manX;
+    ManVec mXP = vars.manXP;
     ManVec mY = vars.manY;
+    ManVec mYP = vars.manYP;
+    Bdd result = Bdd::bddOne();
+    BddSet cube;
     for(int x=0; x<vars.cols; x++){
-        for (int y=0; y<vars.rows-1; y++){
-            //--up
-            Bdd man_in_pos = mX[x] * mY[y];
-            //how to deal with next... :/git 
-            //Bdd man_up = mx[x] * !mY[y] *
+        for (int y=0; y<vars.rows; y++){
+            //--build the transition relation. It is of the form
+            //(m_in_some_pos -> (m moves left OR right OR up OR down)) 
+            //  AND m_in_some_other_pos -> (m moves left OR etc.) etc.
+            //  the moving up/left/right/etc. is restricted to when the man is not already
+            //  at the edge of the game
+            //needs to be expended for moving blocks around and not pushing blocks of the
+            //board
+            Bdd next_man_up, next_man_down, next_man_left, next_man_right = Bdd::bddZero();
+            if(y<vars.rows-1){ next_man_up = mXP[x] * !mYP[y] * mYP[y+1]; } 
+            if(y>0){ next_man_down = mXP[x] * !mYP[y] * mYP[y-1]; }
+            if(x<vars.cols-1){ next_man_right = mXP[x+1] * !mXP[x] * mYP[y]; }
+            if(x>0){ next_man_left = mXP[x-1] * !mXP[x] * mYP[y]; }
+            Bdd cur_man_in_pos = mX[x] * mY[y];
+            Bdd trans_for_cur_pos = next_man_up + next_man_down + next_man_left + next_man_right;
+            result = result * sylvan_imp(cur_man_in_pos.GetBDD(), trans_for_cur_pos.GetBDD());
         }
     }
-    return Bdd::bddOne();
+    return {result, cube};
+}
+
+Bdd staticGoal(const SokobanVars vars){
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    ManVec mY = vars.manY;
+    ManVec mX = vars.manX;
+    return bX[0][0] & bY[0][1];
+}
+
+Bdd existsUntil(Bdd ex, Bdd un, TransCube tc, Bdd z){
+    LACE_ME;
+    std::cout << "EU run" << std::endl;
+    //result = un 'or' (ex 'and' PREV())
+    Bdd prev = z.RelPrev(tc.trans, tc.cube);
+    BddPrint(prev);
+    Bdd result = ex + (un * prev);
+    if(result == z) {
+        std::cout << "result == z" << std::endl;
+        return z; 
+    }
+    else {
+        std::cout << "result != z; more recursion " << std::endl;
+        return existsUntil(ex, un, tc, result);
+    }
 }
 
 void setUpSylvan(){
@@ -190,8 +251,16 @@ int main(int argc, char* argv[]){
     Bdd error = staticError(vars);
     BddGraphGenerate(error, "error");
 
-    Bdd trans = propTrans(vars);
-    BddGraphGenerate(trans, "trans");
+    TransCube tc = propTrans(vars);
+    BddGraphGenerate(tc.trans, "trans");
+
+    Bdd goal = staticGoal(vars);
+    BddGraphGenerate(goal, "goal");    
+
+    //Exists !error Until Goal
+    Bdd result = existsUntil(!error, goal, tc, Bdd::bddZero());
+    std::cout<<"Result is known!"<<std::endl;
+    BddGraphGenerate(result, "result");
 
 
     std::cerr << screen;
