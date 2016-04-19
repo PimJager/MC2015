@@ -107,9 +107,11 @@ Bdd staticInit(SokobanVars vars){
     ManVec mY = vars.manY;
     //return !bX[0][0] * !bX[0][1];// * bX[0][2] * !bX[0][3];
     return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
-            * !bY[0][0] * bY[0][1] * bY[0][2]
-            * !mX[0] * !mX[1] * !mX[2] * mX[3]
-            * !mY[0] * !mY[1] * mY[2];
+            * !bY[0][0] * bY[0][1] * !bY[0][2]
+	    * mX[0] * !mX[1] * !mX[2] * !mX[3]
+            * !mY[0] * mY[1] * !mY[2];
+            //* !mX[0] * !mX[1] * !mX[2] * mX[3]
+            //* !mY[0] * !mY[1] * mY[2];
 }
 
 Bdd propError(SokobanVars vars){
@@ -131,6 +133,15 @@ Bdd staticError(SokobanVars vars){
     BlockVec bX = vars.blockX;
     BlockVec bY = vars.blockY;
     return bX[0][0] * bY[0][0];
+}
+
+Bdd staticGoal(SokobanVars vars){
+    LACE_ME;
+    //finish condition when bloack reach the goal
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    return !bX[0][0] * !bX[0][1] * !bX[0][2] * bX[0][3]
+            * !bY[0][0] * !bY[0][1] * bY[0][2];
 }
 
 Bdd propTrans(const SokobanVars vars){
@@ -192,6 +203,9 @@ int main(int argc, char* argv[]){
 
     Bdd trans = propTrans(vars);
     BddGraphGenerate(trans, "trans");
+
+    Bdd goal = staticGoal(vars);
+    BddGraphGenerate(goal, "goal");
 
 
     std::cerr << screen;
