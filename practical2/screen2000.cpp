@@ -120,9 +120,11 @@ Bdd staticInit(const SokobanVars vars){
     ManVec mX = vars.manX;
     ManVec mY = vars.manY;
     return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
-            * !bY[0][0] * bY[0][1] * bY[0][2]
-            * !mX[0] * !mX[1] * !mX[2] * mX[3]
-            * !mY[0] * !mY[1] * mY[2];
+            * !bY[0][0] * bY[0][1] * !bY[0][2]
+	    * mX[0] * !mX[1] * !mX[2] * !mX[3]
+            * !mY[0] * mY[1] * !mY[2];
+            //* !mX[0] * !mX[1] * !mX[2] * mX[3]
+            //* !mY[0] * !mY[1] * mY[2];
 }
 
 Bdd propError(const SokobanVars vars){
@@ -147,11 +149,11 @@ Bdd staticError(const SokobanVars vars){
     return bX[0][0] * bY[0][0];
 }
 
-
 struct TransCube {
     Bdd trans;
     BddSet cube;
 };
+
 TransCube propTrans(const SokobanVars vars){
     LACE_ME;
     BlockVec bX = vars.blockX;
@@ -191,7 +193,8 @@ Bdd staticGoal(const SokobanVars vars){
     BlockVec bY = vars.blockY;
     ManVec mY = vars.manY;
     ManVec mX = vars.manX;
-    return bX[0][0] & bY[0][1];
+    return !bX[0][0] * !bX[0][1] * !bX[0][2] * bX[0][3]
+            * !bY[0][0] * !bY[0][1] * bY[0][2];
 }
 
 Bdd existsUntil(Bdd ex, Bdd un, TransCube tc, Bdd z){
@@ -261,6 +264,9 @@ int main(int argc, char* argv[]){
     Bdd result = existsUntil(!error, goal, tc, Bdd::bddZero());
     std::cout<<"Result is known!"<<std::endl;
     BddGraphGenerate(result, "result");
+
+    Bdd goal = staticGoal(vars);
+    BddGraphGenerate(goal, "goal");
 
 
     std::cerr << screen;
