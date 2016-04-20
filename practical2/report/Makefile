@@ -7,9 +7,11 @@ DOCUMENT:=p2
 
 all: $(DOCUMENT).pdf
 
-%.pdf: %.tex %.fmt
+%.pdf: %.tex %.fmt .FORCE
 	$(LATEX) $(LATEXFLAGS) $(basename $@)
 	$(LATEX) $(LATEXFLAGS) $(basename $@)
+
+.PHONY: .FORCE
 
 %.fmt: pre.tex
 	$(LATEX) $(LATEXFLAGS) -ini -jobname="$(basename $@)" "&$(LATEX) $<\dump"

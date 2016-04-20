@@ -1,0 +1,80 @@
+\subsection{Encoding}
+In our implementation Sokoban screens are encoded using variables denoting the
+x and y position of each block and the man. Initial, error and goal properties
+are then defined in terms of these variables, as is the transition relation. 
+Below we will show this more 
+clearly and more formally and we will also link the formal specification to the
+implementation in Sylvan.
+
+Ultimately we will combine these parts to check that there is a path from the
+initial configuration to a configuration which satisfied the goal property 
+without ever satisfying the error property. More formally, we will check the
+following formula:
+\begin{equation}\label{eq:eg_end}
+	\mathsf{EG (\neg error \cup goal)}
+\end{equation}
+
+//Nog iets over hoe we screen leyouten met index voor columns en rows enzo
+
+\paragraph{Positions} For the man and for each block variables are defined which
+indicate in which row and in which column the block/man is. For a screen with
+$x$ columns, $y$ rows and $n$ blocks we define $(n+1)*(x+y)$ 
+variables. 
+
+For each block we define
+\begin{itemize}
+	\item[$bx_{i,x}$] which indicates if block $i$ is in the column numbered $x$.
+	\item[$by_{i,y}$] which indicates if block $i$ in in the row numbered $y$.
+\end{itemize}
+For the man we define similar variables, but named just $mx_x$ for the columns
+and $my_y$ for the rows as a screen only has one man.
+
+The actual implementation defines just a sequence of \textsc{bdd}vars, one for 
+each of these variables. 
+
+\paragraph{Transition relation}
+Before showing the different properties of the system, we will first show the 
+transition relation which describes how the man moves around the board and how
+this affects blocks around him.
+
+The main idea behind the transition relation is rather simple. Given that the 
+man is in a certain position $(x,y)$ he can move either up, down, left or right,
+and if there is a block in that position that block moves in the same direction.
+If the man is currently at an edge then he can not move in the direction which 
+would make him fall of the board, and if the man is separated from the edge of 
+the board by only a block, then he also can not move in that direction as that
+would push the block outside of the board.
+
+Any transitions which result in either the man or a block overlapping with a 
+wall, or which result in two blocks overlapping are considered erroneous and
+their resulting states will satisfy the error property.
+
+Equation~\ref{eq:transition} shows the formal transition relation. 
+$\mathsf{blocks}$ is considered the set of block(numbers) in this screen, $rows$ 
+the set of row numbers and $cols$ the set of column numbers. $max_r$ will be
+the maximum column number and $max_c$ the maximum column number. In this 
+relation the primed version of each variable denotes that variable in the next
+state, i.e. the state after the transition has happened.
+We will only 
+fully show the formula for moving right, the formulas for moving left, up and
+down are defined similar. 
+
+\label{eq:transition}
+\begin{multline}
+	\bigwedge_{x \in cols, y \in rows} (mx_x \wedge my_y) \implies \bigg(\\  
+		\Big( x \neq max_c \wedge \big(x \neq (max_c-1) 
+			(\wedge_{b \in blocks} \neg (bx_{i,x+1}) \wedge by_{b,y})\big)\\  
+		\implies \big( \neg mx_{x}' \wedge mx_{x+1}' \wedge my_y' \\  
+			(\wedge_{b \in blocks} bx_{b,x+1} \wedge by_{b,y} \implies
+				bx_{b,x+1}' \wedge bx_{b,x+2}' \wedge by_{b,y}' )\big) \Big)\\  
+		\vee \Big(\text{similar for left}\Big) 
+			\vee \Big(\text{similar for up}\Big)
+			\vee \Big(\text{similar for down}\Big) \bigg)
+\end{multline}
+For standard screens this encoding is actually more complex than necessary. 
+Since all screens are bordered by a layer of walls it is not necessary to check
+if a block would be pushed of screen and if the man would walk of screen, since
+states in which a transition could result in this would already satisfy the 
+error property since a block or the man would overlap with the outside walls. 
+However this transition allows for an optimization in which all layers of 
+outside wall have been removed from a board, reducing the state space.
