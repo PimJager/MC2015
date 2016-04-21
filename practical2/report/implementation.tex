@@ -144,10 +144,19 @@ encoded in the ROBDD since they are static. For example when considering
 Equation~\ref{eq:transition} the generated ROBDD does not contain a check for 
 $x \neq max_c$, instead if $x = max_c$ the transition is not generated. 
 
-\paragraph{unfinished} ladiela, niet af, problemen sylvan, veel gezeur met
-alles aan het werk krijgen
+\paragraph{Not complete} Sadly not all of the above is actually available in our
+implementation. Due to time constraints and trouble setting up Sylvan our 
+implementation is not a finished product. In Section~\ref{sec:discussion} we
+will elaborate a bit more on this trouble and why these have resulted in an
+unfinished implementation. Our current implementation dynamically creates all
+needed variables for the input screen and dynamically creates an (incomplete)
+transition relation. The goal, error and initial properties are not yet 
+dynamically created and are instead given as constant formulas. Our 
+implementation is then capable of calculating the result of 
+Equation~\ref{eq:eg_end}, however because the transition formula is incomplete 
+this result is not yet meaningful. 
 
-\paragraph{reachability} geen analysis
+\paragraph{Couner examples} Our implemen
 
-\paragraph{Couner examples} hebben we niet, ook als implementatie wel af, dan
+hebben we niet, ook als implementatie wel af, dan
 geen uitzicht op direct.

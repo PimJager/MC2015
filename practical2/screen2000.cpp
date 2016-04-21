@@ -198,16 +198,9 @@ Bdd existsUntil(Bdd ex, Bdd un, TransCube tc, Bdd z){
     std::cerr << "EU run" << std::endl;
     //result = un 'or' (ex 'and' PREV())
     Bdd prev = z.RelPrev(tc.trans, tc.cube);
-    BddPrint(prev);
     Bdd result = ex + (un * prev);
-    if(result == z) {
-        std::cerr << "result == z" << std::endl;
-        return z; 
-    }
-    else {
-        std::cerr << "result != z; more recursion " << std::endl;
-        return existsUntil(ex, un, tc, result);
-    }
+    if(result == z) { return z; }
+    else { return existsUntil(ex, un, tc, result); }
 }
 
 void setUpSylvan(){
