@@ -23,21 +23,6 @@ using Screen = std::vector<std::vector<Field>>;
 using ManVec = std::vector<Bdd>;
 using BlockVec = std::vector<std::vector<Bdd>>;
 
-#define block1_x0 0
-#define block1_x1 1
-#define block1_x2 2
-#define block1_x3 3
-#define block1_y0 4
-#define block1_y1 5
-#define block1_y2 6
-#define man_x0 7
-#define man_x1 8
-#define man_x2 9
-#define man_x3 10
-#define man_y0 10
-#define man_y1 11
-#define man_y2 12
-
 struct SokobanVars {
     BlockVec blockX;
     BlockVec blockXP; //P is for primed
