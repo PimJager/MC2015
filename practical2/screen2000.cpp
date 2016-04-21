@@ -40,7 +40,7 @@ using BlockVec = std::vector<std::vector<Bdd>>;
 
 struct SokobanVars {
     BlockVec blockX;
-    BlockVec blockXP;
+    BlockVec blockXP; //P is for primed
     BlockVec blockY;
     BlockVec blockYP;
     ManVec manX;
@@ -108,9 +108,8 @@ Bdd propInit(const SokobanVars vars){
     ManVec manX = vars.manX;
     ManVec manY = vars.manY;
     //--make the formula for blocks and man in position
-    Bdd contents = Bdd::bddOne();
-    //Bdd result = sylvan_or(empty.GetBDD(), contents.GetBDD());
-    return contents;
+    //use the formula from the report
+    return staticInit(vars);
 }
 
 Bdd staticInit(const SokobanVars vars){
@@ -123,8 +122,6 @@ Bdd staticInit(const SokobanVars vars){
             * !bY[0][0] * bY[0][1] * !bY[0][2]
 	    * mX[0] * !mX[1] * !mX[2] * !mX[3]
             * !mY[0] * mY[1] * !mY[2];
-            //* !mX[0] * !mX[1] * !mX[2] * mX[3]
-            //* !mY[0] * !mY[1] * mY[2];
 }
 
 Bdd propError(const SokobanVars vars){
@@ -135,8 +132,7 @@ Bdd propError(const SokobanVars vars){
     ManVec manX = vars.manX;
     ManVec manY = vars.manY;
     //--make the formula for blocks and man in position
-    Bdd contents = Bdd::bddOne();
-    return contents;
+    return staticError(vars);
 }
 
 Bdd staticError(const SokobanVars vars){
@@ -199,17 +195,17 @@ Bdd staticGoal(const SokobanVars vars){
 
 Bdd existsUntil(Bdd ex, Bdd un, TransCube tc, Bdd z){
     LACE_ME;
-    std::cout << "EU run" << std::endl;
+    std::cerr << "EU run" << std::endl;
     //result = un 'or' (ex 'and' PREV())
     Bdd prev = z.RelPrev(tc.trans, tc.cube);
     BddPrint(prev);
     Bdd result = ex + (un * prev);
     if(result == z) {
-        std::cout << "result == z" << std::endl;
+        std::cerr << "result == z" << std::endl;
         return z; 
     }
     else {
-        std::cout << "result != z; more recursion " << std::endl;
+        std::cerr << "result != z; more recursion " << std::endl;
         return existsUntil(ex, un, tc, result);
     }
 }
@@ -242,7 +238,7 @@ int main(int argc, char* argv[]){
     setUpSylvan();
     
     SokobanVars vars = buildScreen(screen, rows, cols);
-    std::cout << "VARS: " << std::endl
+    std::cerr << "VARS: " << std::endl
                 <<"\t cols: "<< vars.cols <<", rows: "<<vars.rows<< std::endl
                 <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
                 <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
@@ -261,13 +257,13 @@ int main(int argc, char* argv[]){
     BddGraphGenerate(goal, "goal");    
 
     //Exists !error Until Goal
-    Bdd result = existsUntil(!error, goal, tc, Bdd::bddZero());
-    std::cout<<"Result is known!"<<std::endl;
-    BddGraphGenerate(result, "result");
+    Bdd lfp = existsUntil(!error, goal, tc, Bdd::bddZero());
+    BddGraphGenerate(lfp, "lfp");
 
-    Bdd goal = staticGoal(vars);
-    BddGraphGenerate(goal, "goal");
+    Bdd result = goal * lfp;
+    BddGraphGenerate(result, "result");        
 
+    //TODO: figure out when this is actually succesfull... 
 
     std::cerr << screen;
 
@@ -290,12 +286,12 @@ void exampletrans(){
 
 void BddPrint(Bdd a){
     if(!a.isTerminal()){
-        std::cout << "NODE:  "<< a.TopVar()  << std::endl;    
+        std::cerr << "NODE:  "<< a.TopVar()  << std::endl;    
         
         BddPrint(a.Then());
         BddPrint(a.Else());
     }else{
-        std::cout << "TERMINAL:  "<< (a==Bdd::bddOne()) << (a==Bdd::bddZero())  << std::endl;
+        std::cerr << "TERMINAL:  "<< (a==Bdd::bddOne()) << (a==Bdd::bddZero())  << std::endl;
     }
 }
 
