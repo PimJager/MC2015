@@ -49,7 +49,8 @@ this affects blocks around him.
 
 The main idea behind the transition relation is rather simple. Given that the 
 man is in a certain position $(x,y)$ he can move either up, down, left or right,
-and if there is a block in that position that block moves in the same direction.
+and if there is a block in the position he would move to then that block moves
+ in the same direction.
 If the man is currently at an edge then he can not move in the direction which 
 would make him fall of the board, and if the man is separated from the edge of 
 the board by only a block, then he also can not move in that direction as that
@@ -60,7 +61,7 @@ wall, or which result in two blocks overlapping are considered erroneous and
 their resulting states will satisfy the error property.
 
 Equation~\ref{eq:transition} shows the formal transition relation. 
-$\mathsf{blocks}$ is considered the set of block(numbers) in this screen, $rows$ 
+$\mathsf{blocks}$ is considered the set of block(number)s in this screen, $rows$ 
 the set of row numbers and $cols$ the set of column numbers. $max_r$ will be
 the maximum column number and $max_c$ the maximum column number. In this 
 relation the primed version of each variable denotes that variable in the next
@@ -81,7 +82,8 @@ down are defined similar.
 			\vee \Big(\text{similar for down}\Big) \bigg)
 \end{multline}
 For standard screens this encoding is actually more complex than necessary. 
-Since all screens are bordered by a layer of walls it is not necessary to check
+Since all standard screens are bordered by a layer of walls it is not necessary
+to check
 if a block would be pushed of screen and if the man would walk of screen, since
 states in which a transition could result in this would already satisfy the 
 error property, since a block or the man would overlap with the outside walls. 
@@ -97,8 +99,8 @@ wall $w$ is in and $w^y$ the row it is in.
 
 \begin{multline}\label{eq:propError}
 	\bigvee_{w \in walls, b \in blocks} (bx_{b,w^x} \wedge by_{b,w^y})\\  
-	\vee \left( \bigvee_{x \in cols, y \in rows} \bigvee_{b \in blocks}
-				\bigvee_{b' \in blocks \setminus \{b\}} 
+	\vee \left( \bigwegde_{x \in cols, y \in rows} \bigwegde_{b \in blocks}
+				\bigwegde_{b' \in blocks \setminus \{b\}} 
 					(bx_{b,x} \wedge bx_{b',x} \wedge by_{b,y} \wedge by_{b',y})
 		\right)
 \end{multline}
@@ -121,8 +123,8 @@ it is in.
 \paragraph{Initial property} The initial property describes a state in which all
 blocks and the man are in their initial position on the board (and nowhere 
 else). Equation~\ref{eq:propInitial} shows this. In this $init_b^x$ denotes
-the the initial column of block $b$, $init_b^y$ denotes the initial column of
-block b. $init_m^x$ denotes the initial column of the man and $init_m^y$ the 
+the the initial column of block $b$, $init_b^y$ denotes the initial row of
+block $b$. $init_m^x$ denotes the initial column of the man and $init_m^y$ the 
 initial row of the man.
 
 \begin{multline} \label{eq:propInitial}
@@ -153,14 +155,14 @@ $x \neq max_c$, instead if $x = max_c$ the transition is not generated.
 \paragraph{Not complete} Sadly not all of the above is actually available in our
 implementation. Due to time constraints and trouble setting up Sylvan our 
 implementation is not a finished product. In Section~\ref{sec:discussion} we
-will elaborate a bit more on this trouble and why these have resulted in an
+will elaborate a bit more on this trouble and why this has resulted in an
 unfinished implementation. 
 
 Our current implementation dynamically creates all
 needed variables for the input screen and dynamically creates an (incomplete)
 transition relation. The goal, error and initial properties are not yet 
 dynamically created and are instead given as constant formulas. Our 
-implementation is then capable of calculating the result of 
+implementation is then able to calculating the result of 
 Equation~\ref{eq:eg_end}, however because the transition formula is incomplete 
 this result is not yet meaningful. 
 
