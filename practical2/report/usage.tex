@@ -1,0 +1,23 @@
+To build our solver it is sufficient to run the included Makefile using the
+\texttt{make} command. This assumes that Sylvan and all its dependencies are 
+correctly installed and on the \textsc{path}. In particular it 
+assumes that the file \texttt{libsylvan.a} is on the \textsc{path}, it will also
+search for \texttt{libsylvan.a} in \texttt{./sylvan/src/} if it is not on the
+path.
+
+After building our solver it is possible to run the solver using 
+\texttt{./main <Sokoban sreen>}. It is possible to either give a path to a
+Sokoban screen or to input a screen directly. Example~\ref{exe:screen2000} will
+run our solver for the file \texttt{/screens/screen.2000}.
+\begin{equation}\label{exe:screen2000}
+	\mathtt{\$}\text{ }\mathtt{./main}\text{ }\mathtt{/screens/screen.2000}
+\end{equation}
+
+When running the implementation it will output some diagnostic information to
+\texttt{std::cerr} and will state that it is not completely implemented on 
+\texttt{std::cout}. 
+
+Some properties in our implementation are not yet based on the inputed screen, 
+but our instead based on a minimal version, one with all the outside walls 
+removed and an extra wall in the top left corner, of screen 2000. This file is 
+also included as \texttt{screen.2000\_minimal}. 
