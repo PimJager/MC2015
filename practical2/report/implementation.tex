@@ -14,6 +14,15 @@ following formula:
 	\mathsf{EG (\neg error \cup goal)}
 \end{equation}
 
+To check if Equation~\ref{eq:eg_end} is solvable we calculate the least fixed 
+point of it using the method shown in the lectures, that is we
+calculate the result of Equation~\ref{eq:lfp}. We then check of this result
+satisfies the initial property. If it does then the Sokoban screen is solvable.
+
+\begin{equation}\label{eq:lfp}
+	\text{todo: lfp}
+\end{equation}
+
 \paragraph{Screens} We interpret a screen as a grid of $x$ columns and $y$ rows
 (position (0,0) is considered the position in the top left).
 Each block and the man has a position in the screen identified by which row and
@@ -98,7 +107,7 @@ wall $w$ is in and $w^y$ the row it is in.
 \end{multline}
 
 \paragraph{Goal property} A state is a goal state if all blocks are on a goal
-position and no two blocks occupy the same goal position. 
+position and no two blocks occupy the same (goal) position. 
 Equation~\ref{eq:propGoal} shows this formally. In this $goals$ is the set of
 goal positions and $g^x$ denotes the column goal $g$ is in, and $g^y$ the row
 it is in.
@@ -108,7 +117,7 @@ it is in.
 		bx_{b,g^x} \wedge by_{b,g^y}\\  
 	\wedge \left( \bigvee_{x \in cols, y \in rows} \bigvee_{b \in blocks}
 				\bigvee_{b' \in blocks \setminus \{b\}} 
-					(bx_{b,x} \wedge bx_{b',x} \wedge by_{b,y} \wedge by_{b',y})
+				\neg(bx_{b,x} \wedge bx_{b',x} \wedge by_{b,y} \wedge by_{b',y})
 		\right)
 \end{multline}
 
