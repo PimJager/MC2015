@@ -1,4 +1,4 @@
-\subsection{Encoding}
+\subsection{Encoding} \label{seq:encoding}
 In our implementation Sokoban screens are encoded using variables denoting the
 x and y position of each block and the man. Initial, error and goal properties
 are then defined in terms of these variables, as is the transition relation. 
@@ -132,3 +132,22 @@ initial row of the man.
 			\wedge (y \neq init_m^y \implies \neg my_y))
 	\Big)
 \end{multline}
+
+\subsubsection{Implementation}
+As stated in the introduction we have implemented our solver using the Sylvan
+ROBDD library. The different properties and the transition relation are all
+expressed as ROBDDs. The algorithms presented in the lecture are used to 
+asses whether or not a screen satisfies Equation~\ref{eq:eg_end}.
+
+Parts of the formulas presented in Section~\ref{sec:encoding} need not be 
+encoded in the ROBDD since they are static. For example when considering
+Equation~\ref{eq:transition} the generated ROBDD does not contain a check for 
+$x \neq max_c$, instead if $x = max_c$ the transition is not generated. 
+
+\paragraph{unfinished} ladiela, niet af, problemen sylvan, veel gezeur met
+alles aan het werk krijgen
+
+\paragraph{reachability} geen analysis
+
+\paragraph{Couner examples} hebben we niet, ook als implementatie wel af, dan
+geen uitzicht op direct.
