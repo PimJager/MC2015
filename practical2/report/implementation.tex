@@ -142,7 +142,7 @@ initial row of the man.
 	\Big)
 \end{multline}
 
-\subsection{Implementation}
+\subsection{Implementation} \label{sec:implementation}
 As stated in the introduction we have implemented our solver using the Sylvan
 \robdd library. The different properties and the transition relation are all
 expressed as \robdds. The algorithms presented in the lecture are used to 
@@ -157,7 +157,9 @@ $x \neq max_c$, instead if $x = max_c$ the transition is not generated.
 implementation. Due to time constraints and trouble setting up Sylvan our 
 implementation is not a finished product. In Section~\ref{sec:discussion} we
 will elaborate a bit more on this trouble and why these have resulted in an
-unfinished implementation. Our current implementation dynamically creates all
+unfinished implementation. 
+
+Our current implementation dynamically creates all
 needed variables for the input screen and dynamically creates an (incomplete)
 transition relation. The goal, error and initial properties are not yet 
 dynamically created and are instead given as constant formulas. Our 
