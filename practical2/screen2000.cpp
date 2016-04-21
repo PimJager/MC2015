@@ -100,6 +100,18 @@ SokobanVars buildScreen(const Screen& screen, int rows, int cols)
     return {blockX, blockXP, blockY, blockYP, manX, manXP, manY, manYP, screen, rows, cols};
 }
 
+Bdd staticInit(const SokobanVars vars){
+    Screen screen = vars.screen;
+    BlockVec bX = vars.blockX;
+    BlockVec bY = vars.blockY;
+    ManVec mX = vars.manX;
+    ManVec mY = vars.manY;
+    return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
+            * !bY[0][0] * bY[0][1] * !bY[0][2]
+        * mX[0] * !mX[1] * !mX[2] * !mX[3]
+            * !mY[0] * mY[1] * !mY[2];
+}
+
 Bdd propInit(const SokobanVars vars){
     LACE_ME;
     Screen screen = vars.screen;
@@ -112,16 +124,14 @@ Bdd propInit(const SokobanVars vars){
     return staticInit(vars);
 }
 
-Bdd staticInit(const SokobanVars vars){
-    Screen screen = vars.screen;
+Bdd staticError(const SokobanVars vars){
+    LACE_ME;
+    //error is when two blocks overlap or when a block overlaps with a wall
+    //or when the man overlaps with a wall
+    //transitions for man overlapping with wall are not generated
     BlockVec bX = vars.blockX;
     BlockVec bY = vars.blockY;
-    ManVec mX = vars.manX;
-    ManVec mY = vars.manY;
-    return !bX[0][0] * !bX[0][1] * bX[0][2] * !bX[0][3]
-            * !bY[0][0] * bY[0][1] * !bY[0][2]
-	    * mX[0] * !mX[1] * !mX[2] * !mX[3]
-            * !mY[0] * mY[1] * !mY[2];
+    return bX[0][0] * bY[0][0];
 }
 
 Bdd propError(const SokobanVars vars){
@@ -133,16 +143,6 @@ Bdd propError(const SokobanVars vars){
     ManVec manY = vars.manY;
     //--make the formula for blocks and man in position
     return staticError(vars);
-}
-
-Bdd staticError(const SokobanVars vars){
-    LACE_ME;
-    //error is when two blocks overlap or when a block overlaps with a wall
-    //or when the man overlaps with a wall
-    //transitions for man overlapping with wall are not generated
-    BlockVec bX = vars.blockX;
-    BlockVec bY = vars.blockY;
-    return bX[0][0] * bY[0][0];
 }
 
 struct TransCube {
@@ -231,11 +231,11 @@ int main(int argc, char* argv[]){
     setUpSylvan();
     
     SokobanVars vars = buildScreen(screen, rows, cols);
-    std::cerr << "VARS: " << std::endl
-                <<"\t cols: "<< vars.cols <<", rows: "<<vars.rows<< std::endl
-                <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
-                <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
-                <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
+    // std::cerr << "VARS: " << std::endl
+    //             <<"\t cols: "<< vars.cols <<", rows: "<<vars.rows<< std::endl
+    //             <<"\t numBlocks: "<<vars.blockX.size()<<"("<<vars.blockY.size()<<")"<<std::endl
+    //             <<"\t blockX[0].size: "<<vars.blockX[0].size()<<", blockY[0].size: "<<vars.blockY[0].size()<<std::endl
+    //             <<"\t manX.size:"<<vars.manX.size()<<", manY.size: "<<vars.manY.size()<<std::endl;
     
     Bdd init = staticInit(vars);
     BddGraphGenerate(init, "init");
@@ -256,11 +256,11 @@ int main(int argc, char* argv[]){
     Bdd result = goal * lfp;
     BddGraphGenerate(result, "result");        
 
-    //TODO: figure out when this is actually succesfull... 
-
     std::cerr << screen;
 
-    return 0;
+    std::cout << "Not implemented" << std::endl;
+
+    return 1;
 }
 
 void exampletrans(){

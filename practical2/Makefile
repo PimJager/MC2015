@@ -1,4 +1,4 @@
-PROGRAM:=screen2000
+PROGRAM:=main
 OBJS:=
 CC = g++
 
