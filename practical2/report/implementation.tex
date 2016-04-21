@@ -2,12 +2,10 @@
 In our implementation Sokoban screens are encoded using variables denoting the
 x and y position of each block and the man. Initial, error and goal properties
 are then defined in terms of these variables, as is the transition relation. 
-Below we will show this more 
-clearly and more formally and we will also link the formal specification to the
-implementation in Sylvan.
+Below we will show this more clearly and more formally.
 
 Ultimately we will combine these parts to check that there is a path from the
-initial configuration to a configuration which satisfied the goal property 
+initial configuration to a configuration which satisfies the goal property 
 without ever satisfying the error property. More formally, we will check the
 following formula:
 \begin{equation}\label{eq:eg_end}
@@ -18,9 +16,8 @@ To check if Equation~\ref{eq:eg_end} is solvable we calculate the least fixed
 point of it using the method shown in the lectures, that is we
 calculate the result of Equation~\ref{eq:lfp}. We then check of this result
 satisfies the initial property. If it does then the Sokoban screen is solvable.
-
 \begin{equation}\label{eq:lfp}
-	\text{todo: lfp}
+	Lfp(Z \mapsto goal \vee (error \wedge \mathbf{EX} Z))
 \end{equation}
 
 \paragraph{Screens} We interpret a screen as a grid of $x$ columns and $y$ rows

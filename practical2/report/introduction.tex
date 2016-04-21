@@ -1,0 +1,16 @@
+Reachability analysis is the process of computing the set of reachable states 
+of a system. This can be used to build a model checker for a system, which can
+determine whether or not a system satisfies some given given properties. This
+is particularly useful for systems which have a lot of possible states.
+
+In this assignment we will use reachability analysis, or more precise, the 
+symbolic reachability algorithm presented in the lectures, to determine whether
+or not it is possible to solve a certain Sokoban screen.
+
+The symbolic reachability algorithm requires that states can be expressed as
+logical formulas. To do this in an efficient way we will use \robdds, which 
+are an efficient representation for logical formulas with a large number of
+variables, both for storage and for operations.
+
+In our implementation we use the \robdd library Sylvan. Our implementation
+is written in C++.
