@@ -1,4 +1,4 @@
-\subsection{Encoding} \label{seq:encoding}
+\subsection{Encoding} \label{sec:encoding}
 In our implementation Sokoban screens are encoded using variables denoting the
 x and y position of each block and the man. Initial, error and goal properties
 are then defined in terms of these variables, as is the transition relation. 
@@ -133,15 +133,15 @@ initial row of the man.
 	\Big)
 \end{multline}
 
-\subsubsection{Implementation}
+\subsection{Implementation}
 As stated in the introduction we have implemented our solver using the Sylvan
-ROBDD library. The different properties and the transition relation are all
-expressed as ROBDDs. The algorithms presented in the lecture are used to 
+\robdd library. The different properties and the transition relation are all
+expressed as \robdds. The algorithms presented in the lecture are used to 
 asses whether or not a screen satisfies Equation~\ref{eq:eg_end}.
 
 Parts of the formulas presented in Section~\ref{sec:encoding} need not be 
-encoded in the ROBDD since they are static. For example when considering
-Equation~\ref{eq:transition} the generated ROBDD does not contain a check for 
+encoded in the \robdd since they are static. For example when considering
+Equation~\ref{eq:transition} the generated \robdd does not contain a check for 
 $x \neq max_c$, instead if $x = max_c$ the transition is not generated. 
 
 \paragraph{Not complete} Sadly not all of the above is actually available in our
@@ -156,7 +156,10 @@ implementation is then capable of calculating the result of
 Equation~\ref{eq:eg_end}, however because the transition formula is incomplete 
 this result is not yet meaningful. 
 
-\paragraph{Couner examples} Our implemen
-
-hebben we niet, ook als implementatie wel af, dan
-geen uitzicht op direct.
+\paragraph{Counter examples or Witnesses} Our implementation in its current form 
+does not provide a counter example or witness, nor is the transition set up to
+keep track of such information. This means that with the current design the 
+implementation is not able to generate a \textsc{lurd} string. This capability
+could be added by annotating the transition relation with variables which track
+what the last direction the man traveled in was, and then keeping track of these
+variables in the function which computes the least fixed point.
