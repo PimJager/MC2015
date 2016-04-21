@@ -14,7 +14,11 @@ following formula:
 	\mathsf{EG (\neg error \cup goal)}
 \end{equation}
 
-//Nog iets over hoe we screen leyouten met index voor columns en rows enzo
+\paragraph{Screens} We interpret a screen as a grid of $x$ columns and $y$ rows
+(position (0,0) is considered the position in the top left).
+Each block and the man has a position in the screen identified by which row and
+column it is in. Goal positions and walls are not explicitly encoded in the 
+screen but are instead encoded in goal and error properties.
 
 \paragraph{Positions} For the man and for each block variables are defined which
 indicate in which row and in which column the block/man is. For a screen with
@@ -59,8 +63,7 @@ We will only
 fully show the formula for moving right, the formulas for moving left, up and
 down are defined similar. 
 
-\label{eq:transition}
-\begin{multline}
+\begin{multline}\label{eq:transition}
 	\bigwedge_{x \in cols, y \in rows} (mx_x \wedge my_y) \implies \bigg(\\  
 		\Big( x \neq max_c \wedge \big(x \neq (max_c-1) 
 			(\wedge_{b \in blocks} \neg (bx_{i,x+1}) \wedge by_{b,y})\big)\\  
@@ -75,6 +78,57 @@ For standard screens this encoding is actually more complex than necessary.
 Since all screens are bordered by a layer of walls it is not necessary to check
 if a block would be pushed of screen and if the man would walk of screen, since
 states in which a transition could result in this would already satisfy the 
-error property since a block or the man would overlap with the outside walls. 
-However this transition allows for an optimization in which all layers of 
+error property, since a block or the man would overlap with the outside walls. 
+However defining the transition like this allows for an optimization in which 
+all layers of 
 outside wall have been removed from a board, reducing the state space.
+
+\paragraph{Error property} A state is considered to be an error state if either
+the man or one of the blocks is overlapping with a wall, or when two blocks are
+overlapping. Equations~\ref{eq:propError} shows this relation formally. In this
+$walls$ is the set of walls on the screen, and $w^x$ denotes the column
+wall $w$ is in and $w^y$ the row it is in.
+
+\begin{multline}\label{eq:propError}
+	\bigvee_{w \in walls, b \in blocks} (bx_{b,w^x} \wedge by_{b,w^y})\\  
+	\vee \left( \bigvee_{x \in cols, y \in rows} \bigvee_{b \in blocks}
+				\bigvee_{b' \in blocks \setminus \{b\}} 
+					(bx_{b,x} \wedge bx_{b',x} \wedge by_{b,y} \wedge by_{b',y})
+		\right)
+\end{multline}
+
+\paragraph{Goal property} A state is a goal state if all blocks are on a goal
+position and no two blocks occupy the same goal position. 
+Equation~\ref{eq:propGoal} shows this formally. In this $goals$ is the set of
+goal positions and $g^x$ denotes the column goal $g$ is in, and $g^y$ the row
+it is in.
+
+\begin{multline}\label{eq:propGoal}
+	\bigwedge_{g \in goals} \bigvee_{b \in blocks} 
+		bx_{b,g^x} \wedge by_{b,g^y}\\  
+	\wedge \left( \bigvee_{x \in cols, y \in rows} \bigvee_{b \in blocks}
+				\bigvee_{b' \in blocks \setminus \{b\}} 
+					(bx_{b,x} \wedge bx_{b',x} \wedge by_{b,y} \wedge by_{b',y})
+		\right)
+\end{multline}
+
+\paragraph{Initial property} The initial property describes a state in which all
+blocks and the man are in their initial position on the board (and nowhere 
+else). Equation~\ref{eq:propInitial} shows this. In this $init_b^x$ denotes
+the the initial column of block $b$, $init_b^y$ denotes the initial column of
+block b. $init_m^x$ denotes the initial column of the man and $init_m^y$ the 
+initial row of the man.
+
+\begin{multline} \label{eq:propInitial}
+	\bigwedge_{x \in cols, y \in rows} \bigwedge_{b \in blocks} \bigg(\\  
+		((x = init_b^x \implies bx_{b,x}) 
+			\wedge (x \neq init_b^x \implies \neg bx_{b,x})) \\  
+		\wedge ((y = init_b^y \implies by_{b,y}) 
+			\wedge (y \neq init_b^y \implies \neg by_{b,y})) \bigg)\\  
+	\wedge \bigwedge_{x \in cols, y \in rows} \Big(
+		((x = init_m^x \implies mx_x) 
+			\wedge (x \neq init_m^x \implies \neg mx_x)) \\  
+		\wedge ((y = init_m^y \implies my_y) 
+			\wedge (y \neq init_m^y \implies \neg my_y))
+	\Big)
+\end{multline}
